@@ -73,7 +73,7 @@ export default function ChatInput({
   return (
     <form
       onSubmit={handleSubmit}
-      className={`overflow-hidden rounded-lg border transition-colors focus-within:border-sky-400 hover:border-sky-400 ${isDarkMode ? 'border-slate-700' : ''}`}
+      className={`overflow-hidden rounded-lg border transition-colors focus-within:border-green-400 hover:border-green-400 ${isDarkMode ? 'border-gray-700' : ''}`}
       aria-label="Chat input form">
       <div className="flex flex-col">
         <textarea
@@ -86,10 +86,10 @@ export default function ChatInput({
           className={`w-full resize-none border-none p-2 focus:outline-none ${
             disabled
               ? isDarkMode
-                ? 'bg-slate-800 text-gray-400'
+                ? 'bg-gray-800 text-gray-400'
                 : 'bg-gray-100 text-gray-500'
               : isDarkMode
-                ? 'bg-slate-800 text-gray-200'
+                ? 'bg-gray-800 text-gray-200'
                 : 'bg-white'
           }`}
           placeholder="What can I help with?"
@@ -98,7 +98,7 @@ export default function ChatInput({
 
         <div
           className={`flex items-center justify-between px-2 py-1.5 ${
-            disabled ? (isDarkMode ? 'bg-slate-800' : 'bg-gray-100') : isDarkMode ? 'bg-slate-800' : 'bg-white'
+            disabled ? (isDarkMode ? 'bg-gray-800' : 'bg-gray-100') : isDarkMode ? 'bg-gray-800' : 'bg-white'
           }`}>
           <div className="flex gap-2 text-gray-500">{/* Icons can go here */}</div>
 
@@ -113,7 +113,7 @@ export default function ChatInput({
             <button
               type="submit"
               disabled={disabled}
-              className={`rounded-md bg-[#19C2FF] px-3 py-1 text-white transition-colors hover:bg-[#0073DC] ${disabled ? 'opacity-50' : ''}`}>
+              className={`rounded-md bg-[#22c55e] px-3 py-1 text-white transition-colors hover:bg-[#15803d] ${disabled ? 'opacity-50' : ''}`}>
               Send
             </button>
           )}
