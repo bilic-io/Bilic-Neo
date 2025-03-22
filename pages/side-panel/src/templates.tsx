@@ -2,43 +2,26 @@
 export const defaultTemplates = [
   {
     id: '1',
-    title: '🌟 Star us on GitHub!',
+    title: '🔍 Compliance Assessment',
     content:
-      "Open the Bilic Neo repository at https://github.com/BilicNeo/BilicNeo and check if you've already starred it. If not, please support us by giving us a star!",
+      'Visit [COMPANY_URL] and analyze their services. Based on their business model and industry focus, what compliance certificates and regulatory approvals would they need as a startup? Please provide a comprehensive list with explanations for each requirement. Consider factors such as: industry sector, target markets, data handling practices, and financial services offered.',
   },
   {
     id: '2',
-    title: '🐦 Follow us on X/Twitter!',
-    content: 'Follow us at https://x.com/BilicNeo to stay updated on the latest news and features!',
+    title: '📝 Regulatory Form Filling',
+    content:
+      'Navigate to [REGULATORY_PORTAL_URL] and help me complete the compliance form. Identify all required fields, document uploads, and signature requirements. Use my company data to fill out the form accurately, highlighting any missing information I need to provide before submission.',
   },
   {
     id: '3',
-    title: '📚 Explore AI Papers',
+    title: '🌐 Website Compliance Check',
     content:
-      '- Go to https://huggingface.co/papers and click through each of the top 3 upvoted papers.\n- For each paper:\n  - Record the title, URL and upvotes\n  - Summarise the abstract section\n- Finally, compile together a summary of all 3 papers, ranked by upvotes',
+      'Analyze [WEBSITE_URL] for regulatory compliance issues. Check for proper privacy policy, terms of service, cookie consent mechanisms, accessibility standards (WCAG), and other required legal disclosures. Provide a detailed report of compliance gaps and recommended fixes to meet regulatory requirements.',
   },
   {
     id: '4',
-    title: '📋 KYC Compliance Check',
+    title: '🔒 Security Vulnerability Scan',
     content:
-      'Can you help me review this KYC form for compliance? I need to check if all required fields are filled correctly and identify any potential red flags based on regulatory requirements. Please analyze the customer information and verification documents attached.',
-  },
-  {
-    id: '5',
-    title: '📝 Contract Risk Analysis',
-    content:
-      'Please review this contract for any potential risks or liabilities. I need you to identify clauses that might be problematic, suggest improvements, and evaluate the overall risk level on a scale of 1-10. Focus particularly on payment terms, termination conditions, and liability limitations.',
-  },
-  {
-    id: '6',
-    title: '🔍 Wallet Risk Assessment',
-    content:
-      'Run a risk score on this account: 0xf01a637cc39d23af1d8bf1e70d2e0097. Analyze transaction history, account age, and interaction with known high-risk addresses. Provide a risk score and explanation of any suspicious patterns detected.',
-  },
-  {
-    id: '7',
-    title: '🛡️ Crypto Security Check',
-    content:
-      'What is a DDoS attack and how can it affect cryptocurrency exchanges? Explain the security implications and recommend best practices for protection against such attacks.',
+      'Perform a security assessment of [WEBSITE_URL]. Check for common vulnerabilities such as XSS, CSRF, SQL injection, insecure cookies, missing security headers, and outdated dependencies. Provide a prioritized list of security issues and recommended remediation steps.',
   },
 ];

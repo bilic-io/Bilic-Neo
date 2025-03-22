@@ -4,9 +4,10 @@ import { Button } from '@extension/ui';
 import { withErrorBoundary, withSuspense } from '@extension/shared';
 import { GeneralSettings } from './components/GeneralSettings';
 import { ModelSettings } from './components/ModelSettings';
+import { CompanyInfoSettings } from './components/CompanyInfoSettings';
 
 const Options = () => {
-  const [activeTab, setActiveTab] = useState('models');
+  const [activeTab, setActiveTab] = useState('profile');
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Check for dark mode preference
@@ -24,6 +25,8 @@ const Options = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'profile':
+        return <CompanyInfoSettings isDarkMode={isDarkMode} />;
       case 'general':
         return <GeneralSettings isDarkMode={isDarkMode} />;
       case 'models':
@@ -44,6 +47,7 @@ const Options = () => {
           <h2 className={`mb-6 text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Settings</h2>
           <ul className="space-y-2">
             {[
+              { id: 'profile', icon: '👤', label: 'Profile' },
               { id: 'general', icon: '⚙️', label: 'General' },
               { id: 'models', icon: '📊', label: 'Models' },
             ].map(item => (

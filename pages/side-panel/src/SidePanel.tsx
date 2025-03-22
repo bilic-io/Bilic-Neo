@@ -10,6 +10,7 @@ import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import ChatHistoryList from './components/ChatHistoryList';
 import TemplateList from './components/TemplateList';
+import CompanyInfoForm from './components/CompanyInfoForm';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import { defaultTemplates } from './templates';
 import './SidePanel.css';
@@ -652,6 +653,9 @@ const SidePanel = () => {
                   visible={true}
                   isDarkMode={isDarkMode}
                 />
+
+                {/* Company Information Form */}
+                <CompanyInfoForm isDarkMode={isDarkMode} />
 
                 {/* Risk Score Card */}
                 <div className="risk-score-card">
