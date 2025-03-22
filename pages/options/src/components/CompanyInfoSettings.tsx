@@ -9,6 +9,8 @@ interface CompanyInfo {
   country: string;
   employees: string;
   description: string;
+  repName: string;
+  repEmail: string;
 }
 
 interface CompanyInfoSettingsProps {
@@ -24,6 +26,8 @@ export const CompanyInfoSettings = ({ isDarkMode = false }: CompanyInfoSettingsP
     country: '',
     employees: '',
     description: '',
+    repName: '',
+    repEmail: '',
   });
 
   // Load saved company info from storage if available
@@ -196,8 +200,55 @@ export const CompanyInfoSettings = ({ isDarkMode = false }: CompanyInfoSettingsP
                 <option value="11-50">11-50</option>
                 <option value="51-200">51-200</option>
                 <option value="201-500">201-500</option>
-                <option value="501+">501+</option>
+                <option value="501-1000">501-1000</option>
+                <option value="1001+">1001+</option>
               </select>
+            </div>
+
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-6">
+              <h3 className={`text-md font-medium mb-4 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                Company Representative
+              </h3>
+
+              <div className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="repName"
+                    className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Representative Name
+                  </label>
+                  <input
+                    type="text"
+                    id="repName"
+                    name="repName"
+                    value={companyInfo.repName}
+                    onChange={handleChange}
+                    placeholder="John Doe"
+                    className={`mt-1 block w-full rounded-md ${
+                      isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-gray-900 border-gray-300'
+                    } border px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500`}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="repEmail"
+                    className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Representative Email
+                  </label>
+                  <input
+                    type="email"
+                    id="repEmail"
+                    name="repEmail"
+                    value={companyInfo.repEmail}
+                    onChange={handleChange}
+                    placeholder="representative@company.com"
+                    className={`mt-1 block w-full rounded-md ${
+                      isDarkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-gray-900 border-gray-300'
+                    } border px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500`}
+                  />
+                </div>
+              </div>
             </div>
 
             <div>

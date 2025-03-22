@@ -4,15 +4,14 @@ import { RxDiscordLogo } from 'react-icons/rx';
 import { FiSettings } from 'react-icons/fi';
 import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
-import { MdOutlineAccountBalanceWallet } from 'react-icons/md';
 import { type Message, Actors, chatHistoryStore } from '@extension/storage';
 import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import ChatHistoryList from './components/ChatHistoryList';
 import TemplateList from './components/TemplateList';
-import CompanyInfoForm from './components/CompanyInfoForm';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import { defaultTemplates } from './templates';
+import { getCompanyInfo, replaceTemplatePlaceholders } from './utils/templateUtils';
 import './SidePanel.css';
 
 const SidePanel = () => {
@@ -465,10 +464,23 @@ const SidePanel = () => {
     }
   };
 
-  const handleTemplateSelect = (content: string) => {
-    console.log('handleTemplateSelect', content);
-    if (setInputTextRef.current) {
-      setInputTextRef.current(content);
+  const handleTemplateSelect = async (content: string) => {
+    try {
+      // Get company information from storage
+      const companyInfo = await getCompanyInfo();
+
+      // Replace placeholders with company info if available
+      const processedContent = replaceTemplatePlaceholders(content, companyInfo);
+
+      if (setInputTextRef.current) {
+        setInputTextRef.current(processedContent);
+      }
+    } catch (error) {
+      console.error('Error processing template:', error);
+      // Fallback to original content if there's an error
+      if (setInputTextRef.current) {
+        setInputTextRef.current(content);
+      }
     }
   };
 
@@ -551,34 +563,14 @@ const SidePanel = () => {
         {!showHistory && (
           <div className="tab-container mx-4 mt-2" role="tablist">
             <button
-              className={`tab ${activeTab === 'prompts' ? 'active' : ''}`}
+              className="tab active"
               onClick={() => setActiveTab('prompts')}
               onKeyDown={e => e.key === 'Enter' && setActiveTab('prompts')}
               role="tab"
-              aria-selected={activeTab === 'prompts'}
-              tabIndex={activeTab === 'prompts' ? 0 : -1}
+              aria-selected={true}
+              tabIndex={0}
               aria-controls="prompts-panel">
               Prompts
-            </button>
-            <button
-              className={`tab ${activeTab === 'profile' ? 'active' : ''}`}
-              onClick={() => setActiveTab('profile')}
-              onKeyDown={e => e.key === 'Enter' && setActiveTab('profile')}
-              role="tab"
-              aria-selected={activeTab === 'profile'}
-              tabIndex={activeTab === 'profile' ? 0 : -1}
-              aria-controls="profile-panel">
-              Profile
-            </button>
-            <button
-              className={`tab ${activeTab === 'logs' ? 'active' : ''}`}
-              onClick={() => setActiveTab('logs')}
-              onKeyDown={e => e.key === 'Enter' && setActiveTab('logs')}
-              role="tab"
-              aria-selected={activeTab === 'logs'}
-              tabIndex={activeTab === 'logs' ? 0 : -1}
-              aria-controls="logs-panel">
-              Logs
             </button>
           </div>
         )}
@@ -641,63 +633,6 @@ const SidePanel = () => {
                     />
                   </div>
                 )}
-              </div>
-            )}
-
-            {activeTab === 'profile' && (
-              <div id="profile-panel" role="tabpanel" aria-labelledby="profile-tab" className="p-4">
-                <ChatHistoryList
-                  sessions={chatSessions}
-                  onSessionSelect={handleSessionSelect}
-                  onSessionDelete={handleSessionDelete}
-                  visible={true}
-                  isDarkMode={isDarkMode}
-                />
-
-                {/* Company Information Form */}
-                <CompanyInfoForm isDarkMode={isDarkMode} />
-
-                {/* Risk Score Card */}
-                <div className="risk-score-card">
-                  <div className="risk-score-header">
-                    <div className="risk-score-title">Risk Score:</div>
-                    <MdOutlineAccountBalanceWallet size={20} color="#22c55e" />
-                  </div>
-
-                  <div className="risk-score-value">78</div>
-
-                  <div className="risk-score-details">
-                    <div className="detail-item">
-                      <div className="detail-label">Wallet Address</div>
-                      <div className="detail-value text-xs">0xf01a637cc39d23af1d8bf1e70d2e0097</div>
-                    </div>
-                    <div className="detail-item">
-                      <div className="detail-label">Balance</div>
-                      <div className="detail-value">$37,000.00</div>
-                    </div>
-                    <div className="detail-item">
-                      <div className="detail-label">Latest</div>
-                      <div className="detail-value text-xs">0xf01a637cc39d23af1d8bf1e70d2e0097</div>
-                    </div>
-                    <div className="detail-item">
-                      <div className="detail-label">First & Last Transaction</div>
-                      <div className="detail-value">4/20/2019 - 2/2/2022</div>
-                    </div>
-                    <div className="detail-item">
-                      <div className="detail-label">Classification</div>
-                      <div className="detail-value">Trader wallet</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'logs' && (
-              <div id="logs-panel" role="tabpanel" aria-labelledby="logs-tab" className="p-4">
-                <div className="message-container">
-                  <h3 className="text-sm font-medium text-gray-200 mb-2">System Logs</h3>
-                  <p className="text-sm text-gray-300">No recent logs to display.</p>
-                </div>
               </div>
             )}
           </>

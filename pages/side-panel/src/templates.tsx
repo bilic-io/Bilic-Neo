@@ -24,4 +24,10 @@ export const defaultTemplates = [
     content:
       'Perform a security assessment of [WEBSITE_URL]. Check for common vulnerabilities such as XSS, CSRF, SQL injection, insecure cookies, missing security headers, and outdated dependencies. Provide a prioritized list of security issues and recommended remediation steps.',
   },
+  {
+    id: '5',
+    title: '📧 Compliance Contact Email',
+    content:
+      'Draft a professional email to a regulatory body regarding our compliance status. The email should be from [REP_NAME] ([REP_EMAIL]) representing [COMPANY_NAME]. Include our industry ([INDUSTRY]), company size ([EMPLOYEES]), and a brief description of our services. The email should request information about upcoming regulatory changes that might affect our business operations.',
+  },
 ];

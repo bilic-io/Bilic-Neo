@@ -1,7 +1,9 @@
 - add profile section, allow adding notes to icloud calendar 
-- add profile section 
+- add company section 
+- company rep information
+- add payment option 
 
 
 Prompts
 
-In the 
+In the

@@ -13,18 +13,18 @@ interface TemplateListProps {
 
 const TemplateList: React.FC<TemplateListProps> = ({ templates, onTemplateSelect, isDarkMode = false }) => {
   return (
-    <div className="p-2">
-      <h3 className={`mb-3 text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Examples</h3>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <div className="template-list-container p-3">
+      <h3 className={`mb-4 text-base font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>Templates</h3>
+      <div className="template-list">
         {templates.map(template => (
           <button
             type="button"
             key={template.id}
             onClick={() => onTemplateSelect(template.content)}
-            className={`rounded-lg p-3 text-left transition-colors ${
-              isDarkMode ? 'bg-gray-800 text-gray-200 hover:bg-gray-700' : 'bg-white text-gray-700 hover:bg-green-50'
-            } border ${isDarkMode ? 'border-gray-700' : 'border-green-100'}`}>
-            <div className="text-sm font-medium">{template.title}</div>
+            className="template-item">
+            <div className={`text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>
+              {template.title}
+            </div>
           </button>
         ))}
       </div>
