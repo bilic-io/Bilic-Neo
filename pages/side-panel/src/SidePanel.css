@@ -422,3 +422,120 @@ code {
 }
 
 /* Animation for loading states */
+
+/* UI/UX Improvements for Bilic Neo */
+.bilic-neo-app {
+  height: 100vh;
+  width: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Header action buttons */
+.header-action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+/* Keyboard shortcut styles */
+kbd {
+  display: inline-block;
+  border-radius: 3px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+  font-family: 'SF Mono', Monaco, Menlo, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  line-height: 1;
+  padding: 2px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  margin: 0 2px;
+}
+
+/* Tooltip styles */
+[title] {
+  position: relative;
+}
+
+[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.75);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 100;
+  pointer-events: none;
+  margin-bottom: 5px;
+}
+
+/* Scrollbar styles for Bilic Neo branding */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #22c55e;
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: #16a34a;
+}
+
+/* Improved focus styles for accessibility */
+:focus-visible {
+  outline: 2px solid #22c55e;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Historical session warning */
+.historical-session-warning {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.7;
+  }
+}
+
+/* Button hover effects */
+button {
+  transition: all 0.2s ease;
+}
+
+/* Message transitions */
+.message-list-item {
+  transition: all 0.3s ease;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .keyboard-shortcuts-panel {
+    display: none;
+  }
+  
+  .header-action-text {
+    display: none;
+  }
+}

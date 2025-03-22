@@ -23,6 +23,7 @@ Shows compliance status at a glance
 Provides a timeline of compliance activities
 Highlights missing information that needs to be filled
 Generates compliance reports based on stored information
+
 4. Integration with Regulatory APIs
 Recommendation: Add integrations with:
 

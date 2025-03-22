@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { RxDiscordLogo } from 'react-icons/rx';
-import { FiSettings } from 'react-icons/fi';
-import { PiPlusBold } from 'react-icons/pi';
-import { GrHistory } from 'react-icons/gr';
+import { FiSettings, FiPlusCircle, FiClock, FiChevronLeft, FiUser } from 'react-icons/fi';
 import { type Message as MessageType, Actors, chatHistoryStore } from '@extension/storage';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import { getCompanyInfo, replaceTemplatePlaceholders } from './utils/templateUtils';
@@ -12,6 +9,15 @@ import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import ChatHistoryList from './components/ChatHistoryList';
 import EnhancedTemplateList from './components/EnhancedTemplateList';
+
+const KeyboardShortcuts = {
+  NEW_CHAT: 'n',
+  HISTORY: 'h',
+  SETTINGS: 's',
+  STOP: 'Escape',
+  FOCUS_INPUT: '/',
+  TOGGLE_DARK_MODE: 'd',
+};
 
 const SidePanel = () => {
   const [messages, setMessages] = useState<MessageType[]>([]);
@@ -572,6 +578,75 @@ const SidePanel = () => {
     }
   };
 
+  // Add handler for keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip if user is typing in an input field, textarea, or has selected text
+      if (
+        document.activeElement?.tagName === 'INPUT' ||
+        document.activeElement?.tagName === 'TEXTAREA' ||
+        window.getSelection()?.toString() !== ''
+      ) {
+        // Allow Escape key in input field to stop task
+        if (e.key === KeyboardShortcuts.STOP && showStopButton) {
+          handleStopTask();
+          e.preventDefault();
+        }
+        return;
+      }
+
+      // Global keyboard shortcuts
+      switch (e.key) {
+        case KeyboardShortcuts.NEW_CHAT:
+          if (!showHistory) {
+            handleNewChat();
+            e.preventDefault();
+          }
+          break;
+        case KeyboardShortcuts.HISTORY:
+          if (!showHistory) {
+            handleLoadHistory();
+            e.preventDefault();
+          } else {
+            handleBackToChat();
+            e.preventDefault();
+          }
+          break;
+        case KeyboardShortcuts.SETTINGS:
+          chrome.runtime.openOptionsPage();
+          e.preventDefault();
+          break;
+        case KeyboardShortcuts.STOP:
+          if (showStopButton) {
+            handleStopTask();
+            e.preventDefault();
+          }
+          break;
+        case KeyboardShortcuts.FOCUS_INPUT: {
+          // Focus on the input field - wrapped in block to avoid lexical declaration error
+          const inputElements = document.querySelectorAll('textarea');
+          if (inputElements.length > 0) {
+            const chatInput = inputElements[0] as HTMLTextAreaElement;
+            chatInput.focus();
+            e.preventDefault();
+          }
+          break;
+        }
+        case KeyboardShortcuts.TOGGLE_DARK_MODE:
+          setIsDarkMode(prev => !prev);
+          e.preventDefault();
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleLoadHistory, handleNewChat, handleStopTask, showHistory, showStopButton]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -586,76 +661,141 @@ const SidePanel = () => {
   }, [messages]);
 
   return (
-    <div>
+    <div className="bilic-neo-app">
       <div
-        className={`flex h-screen flex-col ${isDarkMode ? 'bg-gray-800' : "bg-[url('/bg.jpg')] bg-cover bg-no-repeat"} overflow-hidden border ${isDarkMode ? 'border-green-800' : 'border-[rgb(187,247,208)]'} rounded-2xl`}>
-        <header className="header relative">
-          <div className="header-logo">
+        className={`flex h-screen flex-col ${
+          isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gradient-to-br from-white to-gray-100 text-gray-800'
+        } overflow-hidden rounded-2xl`}>
+        <header
+          className={`p-3 flex items-center justify-between border-b ${
+            isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-green-100 bg-white/80 backdrop-blur-sm'
+          }`}>
+          <div className="flex items-center">
             {showHistory ? (
               <button
                 type="button"
                 onClick={handleBackToChat}
-                className={`${isDarkMode ? 'text-green-400 hover:text-green-300' : 'text-green-500 hover:text-green-600'} cursor-pointer`}
-                aria-label="Back to chat">
-                ← Back
+                className={`flex items-center gap-1 px-2 py-1 rounded-md transition-colors ${
+                  isDarkMode
+                    ? 'text-green-400 hover:text-green-300 hover:bg-gray-700'
+                    : 'text-green-600 hover:text-green-700 hover:bg-green-50'
+                }`}
+                aria-label="Back to chat"
+                title="Back to chat (H)">
+                <FiChevronLeft size={16} />
+                <span>Back</span>
               </button>
             ) : (
               <div className="flex items-center gap-2">
-                <span className={`font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Bilic Neo</span>
+                <div
+                  className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                    isDarkMode ? 'bg-green-600' : 'bg-green-500'
+                  }`}>
+                  <span className="text-white font-bold text-lg">B</span>
+                </div>
+                <h1 className={`font-bold text-lg ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Bilic Neo</h1>
               </div>
             )}
           </div>
-          <div className="header-icons">
+
+          <div className="flex items-center gap-2">
             {!showHistory && (
               <>
                 <button
                   type="button"
                   onClick={handleNewChat}
-                  onKeyDown={e => e.key === 'Enter' && handleNewChat()}
-                  className={`header-icon ${isDarkMode ? 'text-green-400 hover:text-green-300' : 'text-green-500 hover:text-green-600'} cursor-pointer`}
+                  className={`header-action-button ${
+                    isDarkMode ? 'text-green-400 hover:bg-gray-700' : 'text-green-600 hover:bg-green-50'
+                  }`}
                   aria-label="New Chat"
-                  tabIndex={0}>
-                  <PiPlusBold size={20} />
+                  title="New Chat (N)">
+                  <FiPlusCircle size={18} />
                 </button>
                 <button
                   type="button"
                   onClick={handleLoadHistory}
-                  onKeyDown={e => e.key === 'Enter' && handleLoadHistory()}
-                  className={`header-icon ${isDarkMode ? 'text-green-400 hover:text-green-300' : 'text-green-500 hover:text-green-600'} cursor-pointer`}
-                  aria-label="Load History"
-                  tabIndex={0}>
-                  <GrHistory size={20} />
+                  className={`header-action-button ${
+                    isDarkMode ? 'text-green-400 hover:bg-gray-700' : 'text-green-600 hover:bg-green-50'
+                  }`}
+                  aria-label="Chat History"
+                  title="Chat History (H)">
+                  <FiClock size={18} />
                 </button>
               </>
             )}
-            <a
-              href="https://discord.gg/NN3ABHggMK"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`header-icon ${isDarkMode ? 'text-green-400 hover:text-green-300' : 'text-green-500 hover:text-green-600'}`}>
-              <RxDiscordLogo size={20} />
-            </a>
+            <button
+              type="button"
+              onClick={() => setIsDarkMode(prev => !prev)}
+              className={`header-action-button ${
+                isDarkMode ? 'text-green-400 hover:bg-gray-700' : 'text-green-600 hover:bg-green-50'
+              }`}
+              aria-label={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              title={`${isDarkMode ? 'Light' : 'Dark'} Mode (D)`}>
+              {isDarkMode ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+              )}
+            </button>
             <button
               type="button"
               onClick={() => chrome.runtime.openOptionsPage()}
-              onKeyDown={e => e.key === 'Enter' && chrome.runtime.openOptionsPage()}
-              className={`header-icon ${isDarkMode ? 'text-green-400 hover:text-green-300' : 'text-green-500 hover:text-green-600'} cursor-pointer`}
+              className={`header-action-button ${
+                isDarkMode ? 'text-green-400 hover:bg-gray-700' : 'text-green-600 hover:bg-green-50'
+              }`}
               aria-label="Settings"
-              tabIndex={0}>
-              <FiSettings size={20} />
+              title="Settings (S)">
+              <FiSettings size={18} />
             </button>
           </div>
         </header>
 
-        {/* Tab navigation */}
+        {/* Tab navigation - refined */}
         {!showHistory && (
-          <div className="tab-container mx-4 mt-2" role="tablist">
+          <div className={`mx-4 mt-2 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`} role="tablist">
             <button
-              className="tab active"
+              className={`relative px-4 py-2 rounded-t-md font-medium text-sm focus:outline-none ${
+                activeTab === 'prompts'
+                  ? isDarkMode
+                    ? 'text-green-400 border-b-2 border-green-400'
+                    : 'text-green-600 border-b-2 border-green-600'
+                  : isDarkMode
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-600 hover:text-gray-800'
+              }`}
               onClick={() => setActiveTab('prompts')}
-              onKeyDown={e => e.key === 'Enter' && setActiveTab('prompts')}
               role="tab"
-              aria-selected={true}
+              aria-selected={activeTab === 'prompts'}
               tabIndex={0}
               aria-controls="prompts-panel">
               Prompts
@@ -676,11 +816,14 @@ const SidePanel = () => {
         ) : (
           <>
             {activeTab === 'prompts' && (
-              <div id="prompts-panel" role="tabpanel" aria-labelledby="prompts-tab">
-                {messages.length === 0 && (
+              <div
+                id="prompts-panel"
+                role="tabpanel"
+                aria-labelledby="prompts-tab"
+                className="flex flex-col flex-1 overflow-hidden">
+                {messages.length === 0 ? (
                   <>
-                    <div
-                      className={`border-t ${isDarkMode ? 'border-green-900' : 'border-green-100'} mb-2 p-2 shadow-sm backdrop-blur-sm`}>
+                    <div className={`p-3 ${isDarkMode ? 'bg-gray-800' : 'bg-white/80 backdrop-blur-sm'}`}>
                       <ChatInput
                         onSendMessage={handleSendMessage}
                         onStopTask={handleStopTask}
@@ -692,30 +835,46 @@ const SidePanel = () => {
                         isDarkMode={isDarkMode}
                       />
                     </div>
-                    <div>
+                    <div className="flex-1 overflow-auto">
                       <EnhancedTemplateList onTemplateSelect={handleTemplateSelect} isDarkMode={isDarkMode} />
                     </div>
                   </>
-                )}
-                <div
-                  className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${isDarkMode ? 'bg-gray-800/80' : ''}`}>
-                  <MessageList messages={messages} isDarkMode={isDarkMode} />
-                  <div ref={messagesEndRef} />
-                </div>
-                {messages.length > 0 && (
-                  <div
-                    className={`border-t ${isDarkMode ? 'border-green-900' : 'border-green-100'} p-2 shadow-sm backdrop-blur-sm`}>
-                    <ChatInput
-                      onSendMessage={handleSendMessage}
-                      onStopTask={handleStopTask}
-                      disabled={!inputEnabled || isHistoricalSession}
-                      showStopButton={showStopButton}
-                      setContent={setter => {
-                        setInputTextRef.current = setter;
-                      }}
-                      isDarkMode={isDarkMode}
-                    />
-                  </div>
+                ) : (
+                  <>
+                    <div
+                      className={`flex-1 overflow-x-hidden overflow-y-auto scrollbar-thin ${
+                        isDarkMode
+                          ? 'scrollbar-thumb-gray-600 scrollbar-track-gray-800'
+                          : 'scrollbar-thumb-gray-300 scrollbar-track-gray-100'
+                      }`}>
+                      <div className="p-3">
+                        <MessageList messages={messages} isDarkMode={isDarkMode} />
+                        <div ref={messagesEndRef} />
+                      </div>
+                    </div>
+                    <div
+                      className={`border-t p-3 ${
+                        isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-green-100 bg-white/80 backdrop-blur-sm'
+                      }`}>
+                      <ChatInput
+                        onSendMessage={handleSendMessage}
+                        onStopTask={handleStopTask}
+                        disabled={!inputEnabled || isHistoricalSession}
+                        showStopButton={showStopButton}
+                        setContent={setter => {
+                          setInputTextRef.current = setter;
+                        }}
+                        isDarkMode={isDarkMode}
+                      />
+                      {isHistoricalSession && (
+                        <div
+                          className={`mt-1 text-xs ${isDarkMode ? 'text-amber-400' : 'text-amber-600'} flex items-center`}>
+                          <FiUser size={12} className="mr-1" />
+                          <span>You are viewing a historical session. Create a new chat to start a conversation.</span>
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
             )}
