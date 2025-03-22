@@ -4,6 +4,7 @@ import { RxDiscordLogo } from 'react-icons/rx';
 import { FiSettings } from 'react-icons/fi';
 import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
+import { MdOutlineAccountBalanceWallet } from 'react-icons/md';
 import { type Message, Actors, chatHistoryStore } from '@extension/storage';
 import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
@@ -23,6 +24,7 @@ const SidePanel = () => {
   const [isFollowUpMode, setIsFollowUpMode] = useState(false);
   const [isHistoricalSession, setIsHistoricalSession] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [activeTab, setActiveTab] = useState('prompts');
   const sessionIdRef = useRef<string | null>(null);
   const portRef = useRef<chrome.runtime.Port | null>(null);
   const heartbeatIntervalRef = useRef<number | null>(null);
@@ -498,7 +500,6 @@ const SidePanel = () => {
               </button>
             ) : (
               <div className="flex items-center gap-2">
-                <img src="/icon-128.png" alt="Extension Logo" className="size-6" />
                 <span className={`font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Bilic Neo</span>
               </div>
             )}
@@ -544,6 +545,43 @@ const SidePanel = () => {
             </button>
           </div>
         </header>
+
+        {/* Tab navigation */}
+        {!showHistory && (
+          <div className="tab-container mx-4 mt-2" role="tablist">
+            <button
+              className={`tab ${activeTab === 'prompts' ? 'active' : ''}`}
+              onClick={() => setActiveTab('prompts')}
+              onKeyDown={e => e.key === 'Enter' && setActiveTab('prompts')}
+              role="tab"
+              aria-selected={activeTab === 'prompts'}
+              tabIndex={activeTab === 'prompts' ? 0 : -1}
+              aria-controls="prompts-panel">
+              Prompts
+            </button>
+            <button
+              className={`tab ${activeTab === 'profile' ? 'active' : ''}`}
+              onClick={() => setActiveTab('profile')}
+              onKeyDown={e => e.key === 'Enter' && setActiveTab('profile')}
+              role="tab"
+              aria-selected={activeTab === 'profile'}
+              tabIndex={activeTab === 'profile' ? 0 : -1}
+              aria-controls="profile-panel">
+              Profile
+            </button>
+            <button
+              className={`tab ${activeTab === 'logs' ? 'active' : ''}`}
+              onClick={() => setActiveTab('logs')}
+              onKeyDown={e => e.key === 'Enter' && setActiveTab('logs')}
+              role="tab"
+              aria-selected={activeTab === 'logs'}
+              tabIndex={activeTab === 'logs' ? 0 : -1}
+              aria-controls="logs-panel">
+              Logs
+            </button>
+          </div>
+        )}
+
         {showHistory ? (
           <div className="flex-1 overflow-hidden">
             <ChatHistoryList
@@ -556,48 +594,106 @@ const SidePanel = () => {
           </div>
         ) : (
           <>
-            {messages.length === 0 && (
-              <>
+            {activeTab === 'prompts' && (
+              <div id="prompts-panel" role="tabpanel" aria-labelledby="prompts-tab">
+                {messages.length === 0 && (
+                  <>
+                    <div
+                      className={`border-t ${isDarkMode ? 'border-green-900' : 'border-green-100'} mb-2 p-2 shadow-sm backdrop-blur-sm`}>
+                      <ChatInput
+                        onSendMessage={handleSendMessage}
+                        onStopTask={handleStopTask}
+                        disabled={!inputEnabled || isHistoricalSession}
+                        showStopButton={showStopButton}
+                        setContent={setter => {
+                          setInputTextRef.current = setter;
+                        }}
+                        isDarkMode={isDarkMode}
+                      />
+                    </div>
+                    <div>
+                      <TemplateList
+                        templates={defaultTemplates}
+                        onTemplateSelect={handleTemplateSelect}
+                        isDarkMode={isDarkMode}
+                      />
+                    </div>
+                  </>
+                )}
                 <div
-                  className={`border-t ${isDarkMode ? 'border-green-900' : 'border-green-100'} mb-2 p-2 shadow-sm backdrop-blur-sm`}>
-                  <ChatInput
-                    onSendMessage={handleSendMessage}
-                    onStopTask={handleStopTask}
-                    disabled={!inputEnabled || isHistoricalSession}
-                    showStopButton={showStopButton}
-                    setContent={setter => {
-                      setInputTextRef.current = setter;
-                    }}
-                    isDarkMode={isDarkMode}
-                  />
+                  className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${isDarkMode ? 'bg-gray-800/80' : ''}`}>
+                  <MessageList messages={messages} isDarkMode={isDarkMode} />
+                  <div ref={messagesEndRef} />
                 </div>
-                <div>
-                  <TemplateList
-                    templates={defaultTemplates}
-                    onTemplateSelect={handleTemplateSelect}
-                    isDarkMode={isDarkMode}
-                  />
-                </div>
-              </>
+                {messages.length > 0 && (
+                  <div
+                    className={`border-t ${isDarkMode ? 'border-green-900' : 'border-green-100'} p-2 shadow-sm backdrop-blur-sm`}>
+                    <ChatInput
+                      onSendMessage={handleSendMessage}
+                      onStopTask={handleStopTask}
+                      disabled={!inputEnabled || isHistoricalSession}
+                      showStopButton={showStopButton}
+                      setContent={setter => {
+                        setInputTextRef.current = setter;
+                      }}
+                      isDarkMode={isDarkMode}
+                    />
+                  </div>
+                )}
+              </div>
             )}
-            <div
-              className={`scrollbar-gutter-stable flex-1 overflow-x-hidden overflow-y-scroll scroll-smooth p-2 ${isDarkMode ? 'bg-gray-800/80' : ''}`}>
-              <MessageList messages={messages} isDarkMode={isDarkMode} />
-              <div ref={messagesEndRef} />
-            </div>
-            {messages.length > 0 && (
-              <div
-                className={`border-t ${isDarkMode ? 'border-green-900' : 'border-green-100'} p-2 shadow-sm backdrop-blur-sm`}>
-                <ChatInput
-                  onSendMessage={handleSendMessage}
-                  onStopTask={handleStopTask}
-                  disabled={!inputEnabled || isHistoricalSession}
-                  showStopButton={showStopButton}
-                  setContent={setter => {
-                    setInputTextRef.current = setter;
-                  }}
+
+            {activeTab === 'profile' && (
+              <div id="profile-panel" role="tabpanel" aria-labelledby="profile-tab" className="p-4">
+                <ChatHistoryList
+                  sessions={chatSessions}
+                  onSessionSelect={handleSessionSelect}
+                  onSessionDelete={handleSessionDelete}
+                  visible={true}
                   isDarkMode={isDarkMode}
                 />
+
+                {/* Risk Score Card */}
+                <div className="risk-score-card">
+                  <div className="risk-score-header">
+                    <div className="risk-score-title">Risk Score:</div>
+                    <MdOutlineAccountBalanceWallet size={20} color="#22c55e" />
+                  </div>
+
+                  <div className="risk-score-value">78</div>
+
+                  <div className="risk-score-details">
+                    <div className="detail-item">
+                      <div className="detail-label">Wallet Address</div>
+                      <div className="detail-value text-xs">0xf01a637cc39d23af1d8bf1e70d2e0097</div>
+                    </div>
+                    <div className="detail-item">
+                      <div className="detail-label">Balance</div>
+                      <div className="detail-value">$37,000.00</div>
+                    </div>
+                    <div className="detail-item">
+                      <div className="detail-label">Latest</div>
+                      <div className="detail-value text-xs">0xf01a637cc39d23af1d8bf1e70d2e0097</div>
+                    </div>
+                    <div className="detail-item">
+                      <div className="detail-label">First & Last Transaction</div>
+                      <div className="detail-value">4/20/2019 - 2/2/2022</div>
+                    </div>
+                    <div className="detail-item">
+                      <div className="detail-label">Classification</div>
+                      <div className="detail-value">Trader wallet</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'logs' && (
+              <div id="logs-panel" role="tabpanel" aria-labelledby="logs-tab" className="p-4">
+                <div className="message-container">
+                  <h3 className="text-sm font-medium text-gray-200 mb-2">System Logs</h3>
+                  <p className="text-sm text-gray-300">No recent logs to display.</p>
+                </div>
               </div>
             )}
           </>
