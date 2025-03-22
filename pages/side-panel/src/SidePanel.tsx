@@ -4,18 +4,17 @@ import { RxDiscordLogo } from 'react-icons/rx';
 import { FiSettings } from 'react-icons/fi';
 import { PiPlusBold } from 'react-icons/pi';
 import { GrHistory } from 'react-icons/gr';
-import { type Message, Actors, chatHistoryStore } from '@extension/storage';
+import { type Message as MessageType, Actors, chatHistoryStore } from '@extension/storage';
+import { EventType, type AgentEvent, ExecutionState } from './types/event';
+import { getCompanyInfo, replaceTemplatePlaceholders } from './utils/templateUtils';
+import './SidePanel.css';
 import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import ChatHistoryList from './components/ChatHistoryList';
-import TemplateList from './components/TemplateList';
-import { EventType, type AgentEvent, ExecutionState } from './types/event';
-import { defaultTemplates } from './templates';
-import { getCompanyInfo, replaceTemplatePlaceholders } from './utils/templateUtils';
-import './SidePanel.css';
+import EnhancedTemplateList from './components/EnhancedTemplateList';
 
 const SidePanel = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<MessageType[]>([]);
   const [inputEnabled, setInputEnabled] = useState(true);
   const [showStopButton, setShowStopButton] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -48,7 +47,7 @@ const SidePanel = () => {
     sessionIdRef.current = currentSessionId;
   }, [currentSessionId]);
 
-  const appendMessage = useCallback((newMessage: Message, sessionId?: string | null) => {
+  const appendMessage = useCallback((newMessage: MessageType, sessionId?: string | null) => {
     // Don't save progress messages
     const isProgressMessage = newMessage.content === 'Showing progress...';
 
@@ -304,10 +303,10 @@ const SidePanel = () => {
     [stopConnection],
   );
 
-  const handleSendMessage = async (text: string) => {
-    console.log('handleSendMessage', text);
+  const handleSendMessage = async (text: string, files?: File[]) => {
+    console.log('handleSendMessage', text, files);
 
-    if (!text.trim()) return;
+    if (!text.trim() && (!files || files.length === 0)) return;
 
     // Block sending messages in historical sessions
     if (isHistoricalSession) {
@@ -325,6 +324,24 @@ const SidePanel = () => {
       setInputEnabled(false);
       setShowStopButton(true);
 
+      // Extract PDF contents if files are provided
+      let pdfContents: { name: string; content: string; size: number; type: string; lastModified: number }[] = [];
+
+      if (files && files.length > 0) {
+        pdfContents = await Promise.all(
+          files.map(async file => {
+            const content = await readPdfContent(file);
+            return {
+              name: file.name,
+              content,
+              size: file.size,
+              type: file.type,
+              lastModified: file.lastModified,
+            };
+          }),
+        );
+      }
+
       // Create a new chat session for this task if not in follow-up mode
       if (!isFollowUpMode) {
         const newSession = await chatHistoryStore.createSession(
@@ -338,10 +355,18 @@ const SidePanel = () => {
         sessionIdRef.current = sessionId;
       }
 
+      // Build the message content
+      let messageContent = text;
+      if (pdfContents.length > 0) {
+        const fileListText = pdfContents.map(file => `- ${file.name} (${formatFileSize(file.size)})`).join('\n');
+        messageContent = `${text}\n\n[Attached ${pdfContents.length} PDF file${pdfContents.length > 1 ? 's' : ''}]\n${fileListText}`;
+      }
+
       const userMessage = {
         actor: Actors.USER,
-        content: text,
+        content: messageContent,
         timestamp: Date.now(),
+        attachments: pdfContents.length > 0 ? pdfContents : undefined,
       };
 
       // Pass the sessionId directly to appendMessage
@@ -358,6 +383,7 @@ const SidePanel = () => {
         await sendMessage({
           type: 'follow_up_task',
           task: text,
+          pdfContents: pdfContents.length > 0 ? pdfContents : undefined,
           taskId: sessionIdRef.current,
           tabId,
         });
@@ -367,6 +393,7 @@ const SidePanel = () => {
         await sendMessage({
           type: 'new_task',
           task: text,
+          pdfContents: pdfContents.length > 0 ? pdfContents : undefined,
           taskId: sessionIdRef.current,
           tabId,
         });
@@ -384,6 +411,67 @@ const SidePanel = () => {
       setShowStopButton(false);
       stopConnection();
     }
+  };
+
+  // Helper function to read PDF content
+  const readPdfContent = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = event => {
+        try {
+          // For simplicity, extract text from PDF
+          // In a real implementation, you might want to use a PDF parsing library
+          // like pdf.js for better text extraction
+          const arrayBuffer = event.target?.result as ArrayBuffer;
+          const text = extractTextFromPdf(arrayBuffer);
+          resolve(text);
+        } catch (error) {
+          reject(new Error(`Failed to parse PDF: ${error}`));
+        }
+      };
+
+      reader.onerror = () => reject(new Error('Failed to read file'));
+
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  // Simple PDF text extraction
+  const extractTextFromPdf = (arrayBuffer: ArrayBuffer): string => {
+    try {
+      // Basic text extraction - this is a simplified approach
+      // For better extraction, consider using pdf.js or another PDF library
+      const uint8Array = new Uint8Array(arrayBuffer);
+      let text = '';
+
+      // Find potential text in the PDF by looking for text markers
+      // This is a very basic approach and won't work for all PDFs
+      for (let i = 0; i < uint8Array.length; i++) {
+        // Look for text content, skipping binary data
+        if (uint8Array[i] >= 32 && uint8Array[i] < 127) {
+          text += String.fromCharCode(uint8Array[i]);
+        }
+      }
+
+      // Clean up the extracted text
+      text = text
+        .replace(/[^\x20-\x7E\n]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      return text || 'PDF content could not be extracted. Please try a different PDF or manually enter the content.';
+    } catch (error) {
+      console.error('Error extracting text from PDF:', error);
+      return 'PDF content could not be extracted due to an error.';
+    }
+  };
+
+  // Format file size for display
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} bytes`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   const handleStopTask = async () => {
@@ -605,11 +693,7 @@ const SidePanel = () => {
                       />
                     </div>
                     <div>
-                      <TemplateList
-                        templates={defaultTemplates}
-                        onTemplateSelect={handleTemplateSelect}
-                        isDarkMode={isDarkMode}
-                      />
+                      <EnhancedTemplateList onTemplateSelect={handleTemplateSelect} isDarkMode={isDarkMode} />
                     </div>
                   </>
                 )}

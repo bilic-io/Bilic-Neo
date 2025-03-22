@@ -1,9 +1,6 @@
 /* eslint-disable react/prop-types */
-interface Template {
-  id: string;
-  title: string;
-  content: string;
-}
+import React from 'react';
+import type { Template } from '../types/template';
 
 interface TemplateListProps {
   templates: Template[];
