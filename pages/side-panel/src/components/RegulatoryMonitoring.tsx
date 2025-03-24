@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FiAlertCircle, FiCalendar, FiGlobe, FiFilter, FiRefreshCw, FiExternalLink } from 'react-icons/fi';
+import { FiAlertCircle, FiCalendar, FiGlobe, FiRefreshCw, FiExternalLink } from 'react-icons/fi';
 import type { CompanyInfo } from '../utils/templateUtils';
 import { hasTavilyApiKey, fetchRegulatoryUpdates, type RegulationUpdate } from '../utils/tavilyApi';
 
@@ -16,37 +16,9 @@ const formatDate = (date: Date): string => {
   });
 };
 
-// Function to properly format JSON content
-const formatJsonContent = (content: string): JSX.Element | string => {
-  // Check if content appears to be JSON
-  if (content.trim().startsWith('{') && content.trim().endsWith('}')) {
-    try {
-      // Try to parse the JSON
-      const jsonObj = JSON.parse(content);
-
-      // Format the JSON object as a readable structure
-      return (
-        <div className="text-left">
-          {Object.entries(jsonObj).map(([key, value]) => (
-            <div key={key} className="mb-1">
-              <span className="font-medium">{key.replace(/_/g, ' ')}:</span>{' '}
-              {typeof value === 'string' ? value : JSON.stringify(value)}
-            </div>
-          ))}
-        </div>
-      );
-    } catch (e) {
-      // If parsing fails, return the original content
-      return content;
-    }
-  }
-  return content;
-};
-
 export const RegulatoryMonitoring: React.FC<RegulatoryMonitoringProps> = ({ companyInfo }) => {
   const [regulationUpdates, setRegulationUpdates] = useState<RegulationUpdate[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [activeFilter, setActiveFilter] = useState<string>('all');
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [isDarkMode] = useState(() => window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
   const [apiKeyAvailable, setApiKeyAvailable] = useState<boolean>(true);
@@ -103,14 +75,6 @@ export const RegulatoryMonitoring: React.FC<RegulatoryMonitoringProps> = ({ comp
     }
   };
 
-  // Filter regulations by category
-  const getFilteredUpdates = () => {
-    if (activeFilter === 'all') {
-      return regulationUpdates;
-    }
-    return regulationUpdates.filter(update => update.category === activeFilter);
-  };
-
   // Generate mock regulatory updates based on company info (fallback if API fails)
   const generateMockRegulationUpdates = (companyInfo: Record<string, string>): RegulationUpdate[] => {
     const country = companyInfo.country || 'Global';
@@ -144,7 +108,7 @@ export const RegulatoryMonitoring: React.FC<RegulatoryMonitoringProps> = ({ comp
     ];
 
     // Country-specific updates
-    const countryUpdates: Record<string, RegulationUpdate[]> = {
+    const countryUpdates: { [key: string]: RegulationUpdate[] } = {
       'United States': [
         {
           id: 'reg-us-001',
@@ -209,7 +173,7 @@ export const RegulatoryMonitoring: React.FC<RegulatoryMonitoringProps> = ({ comp
     };
 
     // Industry-specific updates
-    const industryUpdates: Record<string, RegulationUpdate[]> = {
+    const industryUpdates: { [key: string]: RegulationUpdate[] } = {
       Finance: [
         {
           id: 'ind-fin-001',
@@ -305,7 +269,7 @@ export const RegulatoryMonitoring: React.FC<RegulatoryMonitoringProps> = ({ comp
 
   // Maps category to nice display name
   const getCategoryLabel = (category: string): string => {
-    const labels: Record<string, string> = {
+    const labels: { [key: string]: string } = {
       finance: 'Finance',
       privacy: 'Privacy',
       security: 'Security',
@@ -327,8 +291,8 @@ export const RegulatoryMonitoring: React.FC<RegulatoryMonitoringProps> = ({ comp
           : 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'low':
         return isDarkMode
-          ? 'bg-blue-900/40 text-blue-300 border-blue-800'
-          : 'bg-blue-100 text-blue-800 border-blue-200';
+          ? 'bg-green-900/40 text-green-300 border-green-800'
+          : 'bg-green-100 text-green-800 border-green-200';
     }
   };
 
@@ -353,20 +317,28 @@ export const RegulatoryMonitoring: React.FC<RegulatoryMonitoringProps> = ({ comp
   };
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Header with title and refresh button */}
-      <div className="flex items-center justify-between mb-5">
-        <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-          Regulatory Monitoring
-        </h2>
-        <div className="flex items-center space-x-3">
-          <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+    <div className="h-full flex flex-col p-4">
+      {/* Tabs at top */}
+      <div className="border-b border-gray-700 mb-4">
+        <div className="flex">
+          <div className={`px-5 py-3 border-b-2 border-green-500 text-green-400 font-medium flex items-center`}>
+            <FiRefreshCw className="mr-2" size={16} />
+            Live Updates
+          </div>
+        </div>
+      </div>
+
+      {/* Title with last updated */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Regulatory Monitoring</h2>
+        <div className="flex items-center">
+          <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             Last updated: {formatDate(lastUpdated)}
           </span>
           <button
-            className={`p-2 rounded-full transition-colors duration-150 ${
+            className={`ml-3 p-2 rounded-full transition-colors duration-150 ${
               isDarkMode
-                ? 'hover:bg-gray-700 text-green-400 hover:text-green-300 bg-gray-800/60'
+                ? 'hover:bg-gray-700 text-green-400 hover:text-green-300'
                 : 'hover:bg-green-50 text-green-600 hover:text-green-700'
             }`}
             onClick={handleRefresh}
@@ -377,110 +349,67 @@ export const RegulatoryMonitoring: React.FC<RegulatoryMonitoringProps> = ({ comp
         </div>
       </div>
 
-      {/* Filter tabs */}
-      <div
-        className={`flex flex-wrap items-center gap-2 mb-5 pb-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-        <button
-          className={`px-4 py-1.5 text-sm rounded-full transition-colors duration-150 ${
-            activeFilter === 'all'
-              ? isDarkMode
-                ? 'bg-green-800/50 text-green-300 border border-green-700 shadow-inner shadow-green-900/20'
-                : 'bg-green-100 text-green-800 border border-green-200 shadow-sm'
-              : isDarkMode
-                ? 'text-gray-300 hover:bg-gray-800 border border-gray-700 hover:text-white'
-                : 'text-gray-600 hover:bg-gray-100 border border-gray-200 hover:text-gray-900'
-          }`}
-          onClick={() => setActiveFilter('all')}>
-          All Updates
-        </button>
-        {['privacy', 'finance', 'security', 'environmental', 'general'].map(category => (
-          <button
-            key={category}
-            className={`px-4 py-1.5 text-sm rounded-full transition-colors duration-150 ${
-              activeFilter === category
-                ? isDarkMode
-                  ? 'bg-green-800/50 text-green-300 border border-green-700 shadow-inner shadow-green-900/20'
-                  : 'bg-green-100 text-green-800 border border-green-200 shadow-sm'
-                : isDarkMode
-                  ? 'text-gray-300 hover:bg-gray-800 border border-gray-700 hover:text-white'
-                  : 'text-gray-600 hover:bg-gray-100 border border-gray-200 hover:text-gray-900'
-            }`}
-            onClick={() => setActiveFilter(category)}>
-            {getCategoryLabel(category)}
-          </button>
-        ))}
-      </div>
+      {/* Updates list */}
+      <div className="overflow-y-auto flex-grow">
+        {!apiKeyAvailable && (
+          <div
+            className={`mb-4 p-4 rounded-lg border ${
+              isDarkMode
+                ? 'bg-gray-800/70 border-yellow-800/50 text-yellow-200'
+                : 'bg-yellow-50 border-yellow-200/50 text-yellow-800'
+            }`}>
+            <div className="flex items-start">
+              <FiAlertCircle
+                className={`mr-3 mt-0.5 flex-shrink-0 ${isDarkMode ? 'text-yellow-300' : 'text-yellow-500'}`}
+              />
+              <div>
+                <p className="font-medium">Tavily API key not found</p>
+                <p className="text-sm mt-1 opacity-90">
+                  For real-time regulatory updates, please add your Tavily API key in the extension settings.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
-      {/* Content area */}
-      <div className="flex-1 overflow-y-auto pr-1 -mr-1 scrollbar-thin scrollbar-thumb-green-500 scrollbar-track-gray-800/20">
+        {/* Security updates attribution */}
+        <div
+          className={`mb-4 p-3 text-xs rounded-md flex items-center ${isDarkMode ? 'bg-gray-800/60 text-gray-400 border border-gray-700' : 'bg-gray-50 text-gray-500 border border-gray-200'}`}>
+          <div className={`mr-2 w-2 h-2 rounded-full ${isDarkMode ? 'bg-green-400' : 'bg-green-500'}`}></div>
+          Security updates provided by{' '}
+          <span className={`ml-1 font-medium ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
+            Finextra Security News
+          </span>
+        </div>
+
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-60">
+          <div className="flex justify-center py-10">
             <div
-              className={`w-10 h-10 border-3 rounded-full ${isDarkMode ? 'border-green-500' : 'border-green-600'} border-t-transparent animate-spin mb-3`}></div>
-            <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              Loading updates...
-            </p>
+              className={`animate-spin rounded-full h-10 w-10 border-4 border-t-transparent ${
+                isDarkMode ? 'border-green-500' : 'border-green-600'
+              }`}
+            />
           </div>
-        ) : !companyInfo || !companyInfo.name ? (
-          <div
-            className={`p-8 text-center rounded-lg border ${isDarkMode ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50'}`}>
-            <FiAlertCircle size={48} className={`mx-auto mb-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
-            <h3 className={`text-lg font-medium mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              Company Profile Required
-            </h3>
-            <p className={`text-sm mb-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Set up your company profile to receive personalized regulatory updates.
-            </p>
-            <button
-              onClick={() => chrome.runtime.openOptionsPage()}
-              className="inline-flex items-center px-5 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 transition-colors duration-150">
-              Set Up Profile
-            </button>
-          </div>
-        ) : getFilteredUpdates().length === 0 ? (
-          <div
-            className={`p-8 text-center rounded-lg border ${isDarkMode ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50'}`}>
-            <FiFilter size={48} className={`mx-auto mb-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
-            <h3 className={`text-lg font-medium mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              No Updates Found
-            </h3>
-            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              No regulatory updates match your current filter. Try selecting a different category.
-            </p>
+        ) : regulationUpdates.length === 0 ? (
+          <div className={`text-center py-10 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            No regulatory updates found
           </div>
         ) : (
-          <div className="space-y-5">
-            {/* Finextra source attribution */}
-            <div
-              className={`p-3 text-xs rounded-lg text-center ${
-                isDarkMode ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600'
-              }`}>
-              Security updates provided by{' '}
-              <a
-                href="https://www.finextra.com/rss/channel.aspx?channel=security"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`font-medium ${
-                  isDarkMode ? 'text-green-400 hover:text-green-300' : 'text-green-600 hover:text-green-500'
-                }`}>
-                Finextra Security News
-              </a>
-            </div>
-
-            {getFilteredUpdates().map(update => (
+          <div className={`space-y-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            {regulationUpdates.map(update => (
               <div
                 key={update.id}
-                className={`p-5 rounded-lg border shadow-sm ${
+                className={`p-4 rounded-lg border ${
                   isDarkMode
-                    ? 'border-gray-700 bg-gray-800/50 hover:bg-gray-800/90'
-                    : 'border-gray-200 bg-white hover:bg-gray-50'
-                } transition-colors duration-200`}>
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className={`font-medium text-base ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    {update.title}
-                  </h3>
+                    ? 'bg-gray-800/70 border-gray-700/80 hover:bg-gray-800/90'
+                    : 'bg-white border-gray-200 hover:bg-gray-50'
+                } shadow-sm transition-colors duration-150`}>
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{update.title}</h3>
                   <span
-                    className={`ml-2 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${getRelevanceClasses(update.relevance)}`}>
+                    className={`ml-2 px-2.5 py-0.5 text-xs font-medium rounded-full border ${getRelevanceClasses(
+                      update.relevance,
+                    )}`}>
                     {update.relevance === 'high'
                       ? 'High Impact'
                       : update.relevance === 'medium'
@@ -489,52 +418,36 @@ export const RegulatoryMonitoring: React.FC<RegulatoryMonitoringProps> = ({ comp
                   </span>
                 </div>
 
-                <div className="flex flex-wrap items-center text-xs mb-3 gap-3">
-                  <span className={`flex items-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    <FiGlobe size={14} className="mr-1.5" />
-                    {update.country}
-                  </span>
-                  <span className={`flex items-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    <FiCalendar size={14} className="mr-1.5" />
-                    {formatDate(update.date)}
-                  </span>
-                  <span className={getCategoryClasses(update.category)}>{getCategoryLabel(update.category)}</span>
+                <div className="mb-3">
+                  <p className="text-sm">{update.summary}</p>
                 </div>
 
-                <div className={`text-sm mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} leading-relaxed`}>
-                  {typeof update.summary === 'string' && update.summary.trim().startsWith('{')
-                    ? formatJsonContent(update.summary)
-                    : update.summary}
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    <span className="font-medium">Source:</span> {update.authority}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
+                  <div className="flex items-center">
+                    <FiGlobe className={`mr-1 ${isDarkMode ? 'text-green-400/70' : 'text-green-600/70'}`} />
+                    <span>{update.country}</span>
                   </div>
 
-                  <a
-                    href={update.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`inline-flex items-center text-xs font-medium transition-colors duration-150 ${
-                      isDarkMode ? 'text-green-400 hover:text-green-300' : 'text-green-600 hover:text-green-700'
-                    }`}>
-                    View Details
-                    <FiExternalLink size={14} className="ml-1.5" />
-                  </a>
-                </div>
-
-                {update.dueDate && (
-                  <div
-                    className={`mt-3 p-2.5 rounded-md text-xs flex items-center ${
-                      isDarkMode
-                        ? 'bg-amber-900/30 text-amber-300 border border-amber-800/50'
-                        : 'bg-yellow-50 text-yellow-800 border border-yellow-200'
-                    }`}>
-                    <FiAlertCircle size={16} className="mr-2" />
-                    Action required by {formatDate(update.dueDate)}
+                  <div className="flex items-center">
+                    <FiCalendar className={`mr-1 ${isDarkMode ? 'text-green-400/70' : 'text-green-600/70'}`} />
+                    <span>{formatDate(update.date)}</span>
                   </div>
-                )}
+
+                  <div className={`${getCategoryClasses(update.category)}`}>{getCategoryLabel(update.category)}</div>
+
+                  {update.url && (
+                    <a
+                      href={update.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-flex items-center transition-colors duration-150 ${
+                        isDarkMode ? 'text-green-400 hover:text-green-300' : 'text-green-600 hover:text-green-700'
+                      }`}>
+                      <span className="mr-1">View Details</span>
+                      <FiExternalLink size={14} />
+                    </a>
+                  )}
+                </div>
               </div>
             ))}
           </div>

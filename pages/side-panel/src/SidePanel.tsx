@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { FiSettings, FiPlusCircle, FiClock, FiChevronLeft, FiUser, FiAlertCircle } from 'react-icons/fi';
+import { FiSettings, FiPlusCircle, FiClock, FiChevronLeft, FiAlertCircle, FiLogIn, FiLogOut } from 'react-icons/fi';
 import { type Message as MessageType, Actors, chatHistoryStore } from '@extension/storage';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import { getCompanyInfo, replaceTemplatePlaceholders } from './utils/templateUtils';
@@ -10,6 +10,8 @@ import ChatInput from './components/ChatInput';
 import ChatHistoryList from './components/ChatHistoryList';
 import EnhancedTemplateList from './components/EnhancedTemplateList';
 import RegulatoryMonitoring from './components/RegulatoryMonitoring';
+import Login from './components/Login';
+import authService from './services/authService';
 
 const KeyboardShortcuts = {
   NEW_CHAT: 'n',
@@ -32,6 +34,8 @@ const SidePanel = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [activeTab, setActiveTab] = useState('prompts');
   const [companyInfo, setCompanyInfo] = useState<Record<string, string>>({});
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(true);
   const sessionIdRef = useRef<string | null>(null);
   const portRef = useRef<chrome.runtime.Port | null>(null);
   const heartbeatIntervalRef = useRef<number | null>(null);
@@ -70,6 +74,34 @@ const SidePanel = () => {
 
     loadCompanyInfo();
   }, []);
+
+  // Check authentication state
+  useEffect(() => {
+    const checkAuthState = async () => {
+      setIsAuthenticating(true);
+      try {
+        const session = await authService.initSession();
+        setIsAuthenticated(session.isAuthenticated);
+      } catch (error) {
+        console.error('Error checking auth state:', error);
+      } finally {
+        setIsAuthenticating(false);
+      }
+    };
+
+    checkAuthState();
+  }, []);
+
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = async () => {
+    const success = await authService.logout();
+    if (success) {
+      setIsAuthenticated(false);
+    }
+  };
 
   const appendMessage = useCallback((newMessage: MessageType, sessionId?: string | null) => {
     // Don't save progress messages
@@ -795,6 +827,31 @@ const SidePanel = () => {
               title="Settings (S)">
               <FiSettings size={18} />
             </button>
+            {isAuthenticated ? (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className={`header-action-button ${
+                  isDarkMode ? 'text-green-400 hover:bg-gray-700' : 'text-green-600 hover:bg-green-50'
+                }`}
+                aria-label="Logout"
+                title="Logout">
+                <FiLogOut size={18} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  // Open login modal
+                }}
+                className={`header-action-button ${
+                  isDarkMode ? 'text-green-400 hover:bg-gray-700' : 'text-green-600 hover:bg-green-50'
+                }`}
+                aria-label="Login"
+                title="Login">
+                <FiLogIn size={18} />
+              </button>
+            )}
           </div>
         </header>
 
@@ -841,59 +898,41 @@ const SidePanel = () => {
           </div>
         )}
 
-        {showHistory ? (
-          <div className="flex-1 overflow-hidden">
-            <ChatHistoryList
-              sessions={chatSessions}
-              onSessionSelect={handleSessionSelect}
-              onSessionDelete={handleSessionDelete}
-              visible={true}
-              isDarkMode={isDarkMode}
-            />
-          </div>
-        ) : (
-          <>
-            {activeTab === 'prompts' && (
-              <div
-                id="prompts-panel"
-                role="tabpanel"
-                aria-labelledby="prompts-tab"
-                className="flex flex-col flex-1 overflow-hidden">
-                {messages.length === 0 ? (
-                  <>
-                    <div className={`p-3 ${isDarkMode ? 'bg-gray-800' : 'bg-white/80 backdrop-blur-sm'}`}>
-                      <ChatInput
-                        onSendMessage={handleSendMessage}
-                        onStopTask={handleStopTask}
-                        disabled={!inputEnabled || isHistoricalSession}
-                        showStopButton={showStopButton}
-                        setContent={setter => {
-                          setInputTextRef.current = setter;
-                        }}
-                        isDarkMode={isDarkMode}
-                      />
-                    </div>
-                    <div className="flex-1 overflow-auto">
-                      <EnhancedTemplateList onTemplateSelect={handleTemplateSelect} isDarkMode={isDarkMode} />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div
-                      className={`flex-1 overflow-x-hidden overflow-y-auto scrollbar-thin ${
-                        isDarkMode
-                          ? 'scrollbar-thumb-gray-600 scrollbar-track-gray-800'
-                          : 'scrollbar-thumb-gray-300 scrollbar-track-gray-100'
-                      }`}>
-                      <div className="p-3">
+        {/* Render main content based on authentication state */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {isAuthenticating ? (
+            <div className="flex justify-center items-center h-full">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+            </div>
+          ) : !isAuthenticated ? (
+            <Login onLoginSuccess={handleLoginSuccess} />
+          ) : showHistory ? (
+            <div className="flex-1 overflow-hidden">
+              <ChatHistoryList
+                sessions={chatSessions}
+                onSessionSelect={handleSessionSelect}
+                onSessionDelete={handleSessionDelete}
+                visible={true}
+                isDarkMode={isDarkMode}
+              />
+            </div>
+          ) : (
+            <>
+              {/* Tab content */}
+              <div className="flex-1 overflow-hidden">
+                {activeTab === 'prompts' && (
+                  <div className="h-full flex flex-col">
+                    {messages.length > 0 ? (
+                      <div className="flex-1 overflow-y-auto">
                         <MessageList messages={messages} isDarkMode={isDarkMode} />
                         <div ref={messagesEndRef} />
                       </div>
-                    </div>
-                    <div
-                      className={`border-t p-3 ${
-                        isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-green-100 bg-white/80 backdrop-blur-sm'
-                      }`}>
+                    ) : (
+                      <div className="flex-1 overflow-auto">
+                        <EnhancedTemplateList onTemplateSelect={handleTemplateSelect} isDarkMode={isDarkMode} />
+                      </div>
+                    )}
+                    <div className="w-full bottom-0 z-10">
                       <ChatInput
                         onSendMessage={handleSendMessage}
                         onStopTask={handleStopTask}
@@ -904,29 +943,15 @@ const SidePanel = () => {
                         }}
                         isDarkMode={isDarkMode}
                       />
-                      {isHistoricalSession && (
-                        <div
-                          className={`mt-1 text-xs ${isDarkMode ? 'text-amber-400' : 'text-amber-600'} flex items-center`}>
-                          <FiUser size={12} className="mr-1" />
-                          <span>You are viewing a historical session. Create a new chat to start a conversation.</span>
-                        </div>
-                      )}
                     </div>
-                  </>
+                  </div>
                 )}
+
+                {activeTab === 'compliance' && <RegulatoryMonitoring companyInfo={companyInfo} />}
               </div>
-            )}
-            {activeTab === 'compliance' && (
-              <div
-                id="compliance-panel"
-                role="tabpanel"
-                aria-labelledby="compliance-tab"
-                className="flex flex-col flex-1 overflow-auto p-4">
-                <RegulatoryMonitoring companyInfo={companyInfo} />
-              </div>
-            )}
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

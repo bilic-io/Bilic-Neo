@@ -7,6 +7,7 @@ import { ExecutionState } from './agent/event/types';
 import { createChatModel } from './agent/helper';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { Actors } from './agent/event/types';
+import { handleOAuthLogin, handleLogout } from './authHandler';
 
 const logger = createLogger('background');
 
@@ -241,6 +242,19 @@ async function subscribeToExecutorEvents(executor: Executor) {
 
 // Add a message handler for the compliance scanner
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Handle authentication requests
+  if (message.type === 'login') {
+    // Handle login request with the specified provider
+    handleOAuthLogin(message.provider).then(sendResponse);
+    return true; // Keep the message channel open for async response
+  }
+
+  if (message.type === 'logout') {
+    // Handle logout request
+    handleLogout().then(sendResponse);
+    return true; // Keep the message channel open for async response
+  }
+
   // Handle compliance scanning requests from the options page
   if (message.action === 'scanWebsiteCompliance' && message.data) {
     const { url, companyInfo } = message.data;

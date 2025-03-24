@@ -40,7 +40,14 @@ const manifest = withSidePanel({
   version: packageJson.version,
   description: '__MSG_extensionDescription__',
   host_permissions: ['<all_urls>'],
-  permissions: ['storage', 'scripting', 'tabs', 'activeTab', 'debugger'],
+  permissions: [
+    'storage',
+    'scripting',
+    'tabs',
+    'activeTab',
+    'debugger',
+    'identity', // Add identity permission for OAuth
+  ],
   options_page: 'options/index.html',
   background: {
     service_worker: 'background.iife.js',
@@ -64,6 +71,11 @@ const manifest = withSidePanel({
       matches: ['*://*/*'],
     },
   ],
+  // OAuth configuration
+  oauth2: {
+    client_id: 'YOUR_CLIENT_ID', // Replace with your actual client ID
+    scopes: ['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'],
+  },
 });
 
 export default manifest;
