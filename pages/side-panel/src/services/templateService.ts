@@ -63,6 +63,86 @@ export const getDefaultTemplatesWithCategories = (): Template[] => {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     },
+    {
+      id: generateUniqueId(),
+      title: '🔑 AWS IAM User Creation',
+      category: 'security',
+      isDefault: true,
+      content:
+        'Navigate to AWS Management Console > IAM service. Create a new IAM user named "testuser" and add them to the "BillingGroup". Ensure proper permissions are set according to least privilege principles. Set up appropriate access keys and provide instructions for secure key management.',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    },
+    {
+      id: generateUniqueId(),
+      title: '🔐 Security Headers Configuration',
+      category: 'security',
+      isDefault: true,
+      content:
+        'Navigate to the web server or CDN configuration for [WEBSITE_URL]. Implement and verify the following security headers: Content-Security-Policy, X-Content-Type-Options, X-Frame-Options, Strict-Transport-Security, and Referrer-Policy. Test the implementation using security header scanning tools and provide a compliance report.',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    },
+    {
+      id: generateUniqueId(),
+      title: '🛡️ Azure Security Center Setup',
+      category: 'security',
+      isDefault: true,
+      content:
+        'Navigate to Azure Portal > Security Center. Enable standard tier protection for critical workloads. Configure email notifications for high severity alerts, implement automatic provisioning of the monitoring agent, and set up weekly scheduled vulnerability scans for VMs and container registries.',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    },
+    {
+      id: generateUniqueId(),
+      title: '🔄 OAuth Application Configuration',
+      category: 'security',
+      isDefault: true,
+      content:
+        'Access the developer portal for [SERVICE_NAME] and create a new OAuth application. Configure the redirect URIs to [REDIRECT_URL], set appropriate scopes limiting access to only required resources, generate client credentials, and implement proper token storage according to OWASP best practices.',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    },
+    {
+      id: generateUniqueId(),
+      title: '📊 GDPR Data Processing Documentation',
+      category: 'compliance',
+      isDefault: true,
+      content:
+        'Create a detailed data processing register for [COMPANY_NAME] that documents: categories of data subjects, types of personal data processed, purposes of processing, retention periods, security measures implemented, and legal basis for processing each data type.',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    },
+    {
+      id: generateUniqueId(),
+      title: '📋 SOC 2 Evidence Collection',
+      category: 'compliance',
+      isDefault: true,
+      content:
+        'Gather evidence for SOC 2 Type II audit for the [SPECIFIC_CONTROL] control. Document the control description, implementation details, testing procedures used to validate effectiveness, and any exceptions found during testing period.',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    },
+    {
+      id: generateUniqueId(),
+      title: '🔎 SSL Certificate Management',
+      category: 'security',
+      isDefault: true,
+      content:
+        'Access the certificate management portal for [DOMAIN]. Generate a new SSL certificate with proper SANs (Subject Alternative Names), configure auto-renewal, implement OCSP stapling, and ensure proper cipher suite configuration following current security best practices.',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    },
+    {
+      id: generateUniqueId(),
+      title: '🤖 Web Automation Security Testing',
+      category: 'security',
+      isDefault: true,
+      content:
+        'Perform security testing on web automation scripts for [COMPANY_NAME]. Identify potential vulnerabilities such as insecure data storage, authentication bypass, and unauthorized access. Provide a detailed report of security issues and recommended remediation steps.',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    },
   ];
 };
 
@@ -92,7 +172,7 @@ export class TemplateService {
         await this.saveTemplates(getDefaultTemplatesWithCategories());
       } else {
         // First time or when default templates are updated (version will be different)
-        const currentVersion = '1.0'; // Update this when default templates change
+        const currentVersion = '1.2'; // Update this when default templates change
         if (!result[DEFAULT_TEMPLATES_VERSION_KEY] || result[DEFAULT_TEMPLATES_VERSION_KEY] !== currentVersion) {
           const defaultTemplates = getDefaultTemplatesWithCategories();
 

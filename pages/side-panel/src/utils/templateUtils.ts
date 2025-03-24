@@ -1,6 +1,6 @@
 // Template utility functions for replacing placeholders with company information
 
-interface CompanyInfo {
+export interface CompanyInfo {
   name: string;
   industry: string;
   website: string;
@@ -9,6 +9,18 @@ interface CompanyInfo {
   description: string;
   repName: string;
   repEmail: string;
+  regulatoryPortalUrl?: string;
+  // Enhanced fields for compliance
+  companySize?: 'small' | 'medium' | 'large' | 'enterprise';
+  jurisdictions?: string[];
+  hasCustomerData?: boolean;
+  hasEmployeeData?: boolean;
+  dataTypes?: string[];
+  processingActivities?: string[];
+  hasPrivacyPolicy?: boolean;
+  hasDataProtectionOfficer?: boolean;
+  lastComplianceReview?: string;
+  [key: string]: string | string[] | boolean | undefined;
 }
 
 /**
@@ -49,6 +61,11 @@ export const replaceTemplatePlaceholders = (content: string, companyInfo?: Compa
   if (companyInfo.repEmail) {
     processedContent = processedContent.replace(/\[REP_EMAIL\]/g, companyInfo.repEmail);
     processedContent = processedContent.replace(/\[REPRESENTATIVE_EMAIL\]/g, companyInfo.repEmail);
+  }
+
+  // Add regulatory portal URL placeholder
+  if (companyInfo.regulatoryPortalUrl) {
+    processedContent = processedContent.replace(/\[REGULATORY_PORTAL_URL\]/g, companyInfo.regulatoryPortalUrl);
   }
 
   return processedContent;

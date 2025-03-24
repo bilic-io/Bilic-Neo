@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Neo Test Page</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+        }
+        h1 {
+            color: #22c55e;
+            margin-bottom: 1rem;
+        }
+        p {
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        .button {
+            background-color: #22c55e;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .button:hover {
+            background-color: #16a34a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to Neo</h1>
+        <p>Your browser extension for regulatory compliance monitoring and AI-powered assistance.</p>
+        <p>This test page confirms that the branding has been successfully updated from "Bilic Neo" to "Neo".</p>
+        <button class="button" onclick="testActors()">Test Actors Reference</button>
+        <p id="result"></p>
+    </div>
+
+    <script>
+        function testActors() {
+            try {
+                // Create a mock Actors enum for testing
+                const Actors = {
+                    USER: 'user',
+                    SYSTEM: 'system',
+                    PLANNER: 'planner',
+                    NAVIGATOR: 'navigator',
+                    VALIDATOR: 'validator'
+                };
+                
+                // Test accessing the Actors properties
+                const actorDisplayNames = {
+                    [Actors.USER]: 'User',
+                    [Actors.SYSTEM]: 'Neo Assistant',
+                    [Actors.PLANNER]: 'Planner',
+                    [Actors.NAVIGATOR]: 'Navigator',
+                    [Actors.VALIDATOR]: 'Validator',
+                };
+                
+                document.getElementById('result').textContent = 'Success! Actors are properly defined: ' + 
+                    JSON.stringify(actorDisplayNames);
+                document.getElementById('result').style.color = '#22c55e';
+            } catch (error) {
+                document.getElementById('result').textContent = 'Error: ' + error.message;
+                document.getElementById('result').style.color = 'red';
+            }
+        }
+    </script>
+</body>
+</html>

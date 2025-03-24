@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { FiSettings, FiPlusCircle, FiClock, FiChevronLeft, FiUser } from 'react-icons/fi';
+import { FiSettings, FiPlusCircle, FiClock, FiChevronLeft, FiUser, FiAlertCircle } from 'react-icons/fi';
 import { type Message as MessageType, Actors, chatHistoryStore } from '@extension/storage';
 import { EventType, type AgentEvent, ExecutionState } from './types/event';
 import { getCompanyInfo, replaceTemplatePlaceholders } from './utils/templateUtils';
@@ -9,6 +9,7 @@ import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import ChatHistoryList from './components/ChatHistoryList';
 import EnhancedTemplateList from './components/EnhancedTemplateList';
+import RegulatoryMonitoring from './components/RegulatoryMonitoring';
 
 const KeyboardShortcuts = {
   NEW_CHAT: 'n',
@@ -30,6 +31,7 @@ const SidePanel = () => {
   const [isHistoricalSession, setIsHistoricalSession] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [activeTab, setActiveTab] = useState('prompts');
+  const [companyInfo, setCompanyInfo] = useState<Record<string, string>>({});
   const sessionIdRef = useRef<string | null>(null);
   const portRef = useRef<chrome.runtime.Port | null>(null);
   const heartbeatIntervalRef = useRef<number | null>(null);
@@ -52,6 +54,22 @@ const SidePanel = () => {
   useEffect(() => {
     sessionIdRef.current = currentSessionId;
   }, [currentSessionId]);
+
+  // Load company information
+  useEffect(() => {
+    const loadCompanyInfo = async () => {
+      try {
+        const info = await getCompanyInfo();
+        if (info) {
+          setCompanyInfo(info as Record<string, string>);
+        }
+      } catch (error) {
+        console.error('Failed to load company info:', error);
+      }
+    };
+
+    loadCompanyInfo();
+  }, []);
 
   const appendMessage = useCallback((newMessage: MessageType, sessionId?: string | null) => {
     // Don't save progress messages
@@ -661,7 +679,7 @@ const SidePanel = () => {
   }, [messages]);
 
   return (
-    <div className="bilic-neo-app">
+    <div className="neo-app">
       <div
         className={`flex h-screen flex-col ${
           isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gradient-to-br from-white to-gray-100 text-gray-800'
@@ -693,7 +711,7 @@ const SidePanel = () => {
                   }`}>
                   <span className="text-white font-bold text-lg">B</span>
                 </div>
-                <h1 className={`font-bold text-lg ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Bilic Neo</h1>
+                <h1 className={`font-bold text-lg ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Neo</h1>
               </div>
             )}
           </div>
@@ -800,6 +818,26 @@ const SidePanel = () => {
               aria-controls="prompts-panel">
               Prompts
             </button>
+            <button
+              className={`relative px-4 py-2 rounded-t-md font-medium text-sm focus:outline-none ${
+                activeTab === 'compliance'
+                  ? isDarkMode
+                    ? 'text-green-400 border-b-2 border-green-400'
+                    : 'text-green-600 border-b-2 border-green-600'
+                  : isDarkMode
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-600 hover:text-gray-800'
+              }`}
+              onClick={() => setActiveTab('compliance')}
+              role="tab"
+              aria-selected={activeTab === 'compliance'}
+              tabIndex={0}
+              aria-controls="compliance-panel">
+              <div className="flex items-center gap-1">
+                <FiAlertCircle size={14} />
+                <span>Live Updates</span>
+              </div>
+            </button>
           </div>
         )}
 
@@ -876,6 +914,15 @@ const SidePanel = () => {
                     </div>
                   </>
                 )}
+              </div>
+            )}
+            {activeTab === 'compliance' && (
+              <div
+                id="compliance-panel"
+                role="tabpanel"
+                aria-labelledby="compliance-tab"
+                className="flex flex-col flex-1 overflow-auto p-4">
+                <RegulatoryMonitoring companyInfo={companyInfo} />
               </div>
             )}
           </>

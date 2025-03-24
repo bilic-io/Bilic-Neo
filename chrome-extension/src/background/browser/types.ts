@@ -63,6 +63,12 @@ export interface BrowserContextConfig {
    * @default 'https://www.google.com'
    */
   homePageUrl: string;
+
+  /**
+   * Run browser in headless mode (no visible UI)
+   * @default false
+   */
+  headless: boolean;
 }
 
 export const DEFAULT_BROWSER_CONTEXT_CONFIG: BrowserContextConfig = {
@@ -75,6 +81,7 @@ export const DEFAULT_BROWSER_CONTEXT_CONFIG: BrowserContextConfig = {
   viewportExpansion: 500,
   includeDynamicAttributes: true,
   homePageUrl: 'https://www.google.com',
+  headless: false,
 };
 
 export interface PageState extends DOMState {

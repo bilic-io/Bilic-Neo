@@ -134,7 +134,7 @@ const EnhancedTemplateList: React.FC<TemplateListProps> = ({ onTemplateSelect, i
 
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'bilic-neo-templates.json';
+      link.download = 'neo-templates.json';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

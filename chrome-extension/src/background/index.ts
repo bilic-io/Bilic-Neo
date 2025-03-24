@@ -5,7 +5,8 @@ import { Executor } from './agent/executor';
 import { createLogger } from './log';
 import { ExecutionState } from './agent/event/types';
 import { createChatModel } from './agent/helper';
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { Actors } from './agent/event/types';
 
 const logger = createLogger('background');
 
@@ -237,3 +238,242 @@ async function subscribeToExecutorEvents(executor: Executor) {
     }
   });
 }
+
+// Add a message handler for the compliance scanner
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Handle compliance scanning requests from the options page
+  if (message.action === 'scanWebsiteCompliance' && message.data) {
+    const { url, companyInfo } = message.data;
+
+    if (!url || !companyInfo) {
+      sendResponse({ success: false, error: 'Missing URL or company info' });
+      return true;
+    }
+
+    console.log(`Scanning website for compliance: ${url}`);
+
+    // Create a unique task ID for this scan
+    const taskId = `compliance-scan-${Date.now()}`;
+
+    // Create scan template based on company info
+    const template = `Analyze ${url} for regulatory compliance issues specific to ${companyInfo.industry || 'general'} industry. 
+      Check for proper privacy policy, terms of service, cookie consent mechanisms, 
+      accessibility standards (WCAG), and other required legal disclosures.
+      Focus particularly on requirements for ${companyInfo.country || 'international'} regulations.
+      Provide a detailed report of compliance gaps and recommended fixes in JSON format.
+      Format the output as a valid JSON with compliance gaps, risk score, and deadlines.`;
+
+    // Create a headless browser context for compliance scanning
+    const headlessBrowserContext = new BrowserContext({
+      headless: true, // Run in headless mode
+      highlightElements: false, // No need to highlight in headless mode
+    });
+
+    // Use the executor to perform the scan
+    (async () => {
+      let executor: Executor | null = null;
+
+      try {
+        // Set up an executor for this task with headless browser context
+        executor = await setupExecutor(taskId, template, headlessBrowserContext);
+
+        // Navigate to the target URL first
+        await headlessBrowserContext.navigateTo(url);
+
+        // Set up a listener for executor events to capture the result
+        let scanResult = '';
+
+        executor.clearExecutionEvents();
+        executor.subscribeExecutionEvents(async event => {
+          // Capture the message content from USER (result) events
+          if (event.actor === Actors.USER && event.data && event.data.details) {
+            scanResult = event.data.details;
+          }
+
+          // When task is completed, process the result
+          if (event.state === ExecutionState.TASK_OK) {
+            try {
+              // Process the captured result
+              let complianceData;
+
+              try {
+                // Try to extract structured data from the result
+                const jsonMatch = scanResult.match(/```json\n([\s\S]*?)\n```/) || scanResult.match(/{[\s\S]*}/);
+
+                const jsonStr = jsonMatch ? jsonMatch[0] : scanResult;
+                const cleaned = jsonStr.replace(/```json|```/g, '').trim();
+
+                // Parse JSON or use a simplified format
+                try {
+                  complianceData = JSON.parse(cleaned);
+                } catch (e) {
+                  // If parsing fails, use a simple structure
+                  complianceData = {
+                    gaps: [
+                      {
+                        requirementId: 'parse-error',
+                        regulation: 'General',
+                        requirement: 'Compliance Analysis',
+                        description: scanResult,
+                        severity: 'medium',
+                        recommendation: 'Review the raw report for details',
+                      },
+                    ],
+                    riskScore: 50,
+                    checklist: {
+                      industry: companyInfo.industry || 'General',
+                      items: [{ id: 'item-1', text: 'Review compliance report', importance: 'critical' }],
+                    },
+                    deadlines: [],
+                  };
+                }
+
+                // Add the raw report
+                complianceData.rawReport = scanResult;
+
+                // Send the processed data back to the options page
+                sendResponse({
+                  success: true,
+                  data: complianceData,
+                });
+              } catch (error) {
+                console.error('Failed to process compliance scan result:', error);
+                sendResponse({
+                  success: false,
+                  error: 'Failed to process compliance scan result',
+                });
+              }
+            } finally {
+              // Clean up
+              if (executor) {
+                await executor.cleanup();
+              }
+              await headlessBrowserContext.cleanup();
+            }
+          } else if (event.state === ExecutionState.TASK_FAIL || event.state === ExecutionState.TASK_CANCEL) {
+            // Handle failure case
+            console.error('Compliance scan failed:', event);
+            sendResponse({
+              success: false,
+              error: 'Compliance scan failed',
+            });
+
+            // Clean up
+            if (executor) {
+              await executor.cleanup();
+            }
+            await headlessBrowserContext.cleanup();
+          }
+        });
+
+        // Start the execution after navigation
+        await executor.execute();
+      } catch (error) {
+        console.error('Failed to setup compliance scan:', error);
+        sendResponse({
+          success: false,
+          error: 'Failed to setup compliance scan',
+        });
+
+        // Clean up
+        if (executor) {
+          await executor.cleanup();
+        }
+        await headlessBrowserContext.cleanup();
+      }
+    })();
+
+    // Return true to indicate that we'll send the response asynchronously
+    return true;
+  }
+
+  // Handle the execute message with URL action
+  if (message.type === 'EXECUTE_MESSAGE_WITH_URL' && message.payload) {
+    const { message: userMessage, url, needsResponse = true } = message.payload;
+
+    if (!url) {
+      sendResponse({ success: false, error: 'Missing URL' });
+      return true;
+    }
+
+    // Create a unique task ID
+    const taskId = `url-analysis-${Date.now()}`;
+
+    (async () => {
+      let executor: Executor | null = null;
+
+      try {
+        // Set up an executor for this task
+        executor = await setupExecutor(taskId, userMessage.content, browserContext);
+
+        // Navigate to the target URL first
+        await browserContext.navigateTo(url);
+
+        // Set up a listener for executor events to capture the result
+        let analysisResult = '';
+
+        executor.clearExecutionEvents();
+        executor.subscribeExecutionEvents(async event => {
+          // Capture the message content from USER (result) events
+          if (event.actor === Actors.USER && event.data && event.data.details) {
+            analysisResult = event.data.details;
+          }
+
+          // When task is completed, return the result
+          if (event.state === ExecutionState.TASK_OK) {
+            try {
+              // Only send response if needsResponse is true
+              if (needsResponse) {
+                sendResponse({
+                  success: true,
+                  content: analysisResult,
+                });
+              }
+            } finally {
+              // Clean up
+              if (executor) {
+                await executor.cleanup();
+              }
+            }
+          } else if (event.state === ExecutionState.TASK_FAIL || event.state === ExecutionState.TASK_CANCEL) {
+            // Handle failure case
+            console.error('URL analysis failed:', event);
+
+            // Only send response if needsResponse is true
+            if (needsResponse) {
+              sendResponse({
+                success: false,
+                error: 'URL analysis failed',
+              });
+            }
+
+            // Clean up
+            if (executor) {
+              await executor.cleanup();
+            }
+          }
+        });
+
+        // Start the execution after navigation
+        await executor.execute();
+      } catch (error) {
+        console.error('Failed to setup URL analysis:', error);
+        sendResponse({
+          success: false,
+          error: 'Failed to setup URL analysis',
+        });
+
+        // Clean up
+        if (executor) {
+          await executor.cleanup();
+        }
+      }
+    })();
+
+    // Return true to indicate that we'll send the response asynchronously
+    return true;
+  }
+
+  // Return false by default to indicate that we won't send a response asynchronously
+  return false;
+});

@@ -5,6 +5,7 @@ import { withErrorBoundary, withSuspense } from '@extension/shared';
 import { GeneralSettings } from './components/GeneralSettings';
 import { ModelSettings } from './components/ModelSettings';
 import { CompanyInfoSettings } from './components/CompanyInfoSettings';
+import { ComplianceSettings } from './components/ComplianceSettings';
 
 const Options = () => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -31,6 +32,8 @@ const Options = () => {
         return <GeneralSettings isDarkMode={isDarkMode} />;
       case 'models':
         return <ModelSettings isDarkMode={isDarkMode} />;
+      case 'compliance':
+        return <ComplianceSettings isDarkMode={isDarkMode} />;
       default:
         return null;
     }
@@ -43,11 +46,12 @@ const Options = () => {
       <nav
         className={`w-48 border-r ${isDarkMode ? 'border-gray-700 bg-gray-800/80' : 'border-white/20 bg-[#22c55e]/10'} backdrop-blur-sm`}>
         <div className="p-4">
-          <h1 className={`mb-2 text-xl font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Bilic Neo</h1>
+          <h1 className={`mb-2 text-xl font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Neo</h1>
           <h2 className={`mb-6 text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Settings</h2>
           <ul className="space-y-2">
             {[
               { id: 'profile', icon: '👤', label: 'Profile' },
+              { id: 'compliance', icon: '🛡️', label: 'Compliance' },
               { id: 'general', icon: '⚙️', label: 'General' },
               { id: 'models', icon: '📊', label: 'Models' },
             ].map(item => (

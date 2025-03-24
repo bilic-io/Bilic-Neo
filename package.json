@@ -31,11 +31,15 @@
   },
   "dependencies": {
     "eslint-plugin-tailwindcss": "^3.17.4",
+    "file-saver": "^2.0.5",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.270",
+    "@types/file-saver": "^2.0.7",
     "@types/node": "^22.5.5",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
@@ -57,12 +61,12 @@
     "postcss": "^8.4.47",
     "prettier": "^3.3.3",
     "rimraf": "^6.0.1",
+    "run-script-os": "^1.1.6",
     "tailwindcss": "^3.4.14",
     "tslib": "^2.6.3",
-    "typescript": "5.5.4",
     "turbo": "^2.3.3",
-    "vite": "6.0.5",
-    "run-script-os": "^1.1.6"
+    "typescript": "5.5.4",
+    "vite": "6.0.5"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json}": [

@@ -30,6 +30,8 @@ Recommendation: Add integrations with:
 Public regulatory databases
 Industry-specific compliance resources
 Automatic regulatory updates based on the company's industry
+
+
 5. Collaboration Features
 Recommendation: Add:
 
@@ -37,6 +39,7 @@ Shared templates within an organization
 Comment/annotation system for compliance documents
 Role-based access (admin, compliance officer, etc.)
 Activity logs for audit purposes
+
 6. AI-Powered Compliance Suggestions
 Recommendation: Implement:
 
@@ -44,6 +47,7 @@ Automatic detection of compliance gaps based on company info
 Industry-specific compliance checklists
 Regulatory deadline reminders
 Risk assessment scoring
+
 7. UI/UX Improvements
 Recommendation: Enhance with:
 
@@ -51,6 +55,8 @@ Interactive onboarding tutorial
 Keyboard shortcuts for power users
 Localization for international companies
 Accessibility improvements (WCAG compliance)
+
+
 8. Export and Reporting
 Recommendation: Add ability to:
 
@@ -58,6 +64,8 @@ Export compliance reports as PDF or Word documents
 Schedule recurring compliance checks
 Generate executive summaries for management
 Create audit-ready documentation
+
+
 9. Advanced Representative Management
 Recommendation: Expand the company representative section to:
 
@@ -78,3 +86,9 @@ Would you like me to elaborate on any of these suggestions or provide implementa
 Prompts
 
 In the
+
+
+TODO 22/03/25
+
+- Make it a SAAS style business
+- add a realtime Regulatory Monitoring update on the side panel similar to this: https://visualping.io/blog/regulatory-compliance-how-to-monitor-changes
