@@ -46,7 +46,7 @@ const Options = () => {
       <nav
         className={`w-48 border-r ${isDarkMode ? 'border-gray-700 bg-gray-800/80' : 'border-white/20 bg-[#22c55e]/10'} backdrop-blur-sm`}>
         <div className="p-4">
-          <h1 className={`mb-2 text-xl font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Neo</h1>
+          <h1 className={`mb-2 text-xl font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Delegate</h1>
           <h2 className={`mb-6 text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Settings</h2>
           <ul className="space-y-2">
             {[

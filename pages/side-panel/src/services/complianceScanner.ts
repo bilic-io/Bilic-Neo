@@ -80,7 +80,7 @@ export async function scanWebsiteCompliance(
   }`;
 
   try {
-    // Use the Bilic Neo message executor to analyze the website
+    // Use the Delegate message executor to analyze the website
     // This needs to be adjusted to work with the actual executor in the project
     const message = {
       role: 'user',

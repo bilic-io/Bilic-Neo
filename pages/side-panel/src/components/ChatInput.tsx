@@ -140,7 +140,7 @@ export default function ChatInput({
                 ? 'bg-gray-800 text-gray-200'
                 : 'bg-white'
           }`}
-          placeholder="Ask Neo..."
+          placeholder="Ask Delegate..."
           aria-label="Message input"
         />
 

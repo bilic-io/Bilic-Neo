@@ -1,11 +1,11 @@
 {
   "extensionDescription": {
     "description": "Extension description",
-    "message": "Bilic Neo is an AI agent that automates your browser usage."
+    "message": "Delegate is an AI agent that automates your browser usage."
   },
   "extensionName": {
     "description": "Extension name",
-    "message": "Bilic Neo"
+    "message": "Delegate"
   },
   "toggleTheme": {
     "message": "Toggle theme"

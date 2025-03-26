@@ -1,4 +1,4 @@
-// Compliance utilities for Bilic Neo
+// Compliance utilities for Delegate
 
 import type { CompanyInfo } from './templateUtils';
 

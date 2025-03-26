@@ -94,7 +94,7 @@ export const CompanyInfoSettings = ({ isDarkMode = false }: CompanyInfoSettingsP
 
         <p className={`text-sm mb-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
           Your company information will be used to personalize compliance templates and regulatory assessments. This
-          data helps Bilic Neo provide more accurate compliance guidance specific to your industry and business size.
+          data helps Delegate provide more accurate compliance guidance specific to your industry and business size.
         </p>
 
         {isEditing ? (
