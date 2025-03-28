@@ -93,7 +93,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     <div className="flex flex-col items-center p-6 h-full">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <h2 className="text-2xl font-bold mb-2 text-green-500">Log in to Delegate</h2>
+          <h2 className="text-2xl font-bold mb-2 text-green-500">Log in to Handover</h2>
           <p className="text-gray-600 dark:text-gray-400">Enter your credentials to continue</p>
         </div>
 

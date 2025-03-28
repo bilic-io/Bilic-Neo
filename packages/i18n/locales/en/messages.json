@@ -1,11 +1,11 @@
 {
   "extensionDescription": {
     "description": "Extension description",
-    "message": "Delegate is an AI agent that automates your browser usage."
+    "message": "Handover is an AI agent that automates your browser usage."
   },
   "extensionName": {
     "description": "Extension name",
-    "message": "Delegate"
+    "message": "Handover"
   },
   "toggleTheme": {
     "message": "Toggle theme"

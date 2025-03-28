@@ -44,10 +44,10 @@ interface JsPDFWithAutoTable extends jsPDF {
 // Map of actors to display names for reports
 const actorDisplayNames: Record<string, string> = {
   [Actors.USER]: 'You',
-  [Actors.SYSTEM]: 'Delegate Assistant',
-  [Actors.PLANNER]: 'Delegate Planner',
-  [Actors.NAVIGATOR]: 'Delegate Navigator',
-  [Actors.VALIDATOR]: 'Delegate Validator',
+  [Actors.SYSTEM]: 'Handover Assistant',
+  [Actors.PLANNER]: 'Handover Planner',
+  [Actors.NAVIGATOR]: 'Handover Navigator',
+  [Actors.VALIDATOR]: 'Handover Validator',
 };
 
 /**

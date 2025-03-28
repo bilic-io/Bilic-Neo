@@ -755,7 +755,7 @@ const SidePanel = () => {
                     <path d="M12 19V5M5 12l7-7 7 7" />
                   </svg>
                 </div>
-                <h1 className={`font-bold text-lg ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Delegate</h1>
+                <h1 className={`font-bold text-lg ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>Handover</h1>
               </div>
             )}
           </div>

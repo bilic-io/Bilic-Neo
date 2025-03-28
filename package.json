@@ -1,7 +1,7 @@
 {
-  "name": "delegate",
+  "name": "handover",
   "version": "0.1.2",
-  "description": "Delegate - AI web automation tool",
+  "description": "Handover - AI web automation tool",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
