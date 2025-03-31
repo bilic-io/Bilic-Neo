@@ -867,9 +867,9 @@ const SidePanel = () => {
           </div>
         </header>
 
-        {/* Tab navigation - refined */}
-        {!showHistory && (
-          <div className={`mx-4 mt-2 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`} role="tablist">
+        {/* Tab navigation */}
+        {isAuthenticated && (
+          <div className="flex border-b border-b-gray-200 dark:border-b-gray-700">
             <button
               className={`relative px-4 py-2 rounded-t-md font-medium text-sm focus:outline-none ${
                 activeTab === 'prompts'

@@ -7,6 +7,16 @@ export interface Template {
   isDefault?: boolean;
   createdAt?: number;
   updatedAt?: number;
+  isWorkflow?: boolean;
+  workflowSteps?: WorkflowStep[];
+}
+
+export interface WorkflowStep {
+  id: string;
+  title: string;
+  instruction: string;
+  order: number;
+  isCompleted?: boolean;
 }
 
 export interface TemplateCategory {
@@ -19,32 +29,56 @@ export interface TemplateCategory {
 export const DEFAULT_CATEGORIES: TemplateCategory[] = [
   {
     id: 'compliance',
-    name: 'Compliance',
-    description: 'Templates for regulatory compliance checks and assessments',
+    name: 'Compliance Processes',
+    description: 'Workflows for regulatory compliance assessments and reporting',
     icon: '🔍',
   },
   {
     id: 'security',
-    name: 'Security',
-    description: 'Templates for security assessments and vulnerability scanning',
+    name: 'Security Operations',
+    description: 'Workflows for security assessments and vulnerability management',
     icon: '🔒',
   },
   {
-    id: 'legal',
-    name: 'Legal',
-    description: 'Templates for legal document generation and review',
-    icon: '⚖️',
+    id: 'research',
+    name: 'Web Research',
+    description: 'Workflows for gathering and analyzing information from the web',
+    icon: '🌐',
+  },
+  {
+    id: 'content',
+    name: 'Content Creation',
+    description: 'Workflows for drafting and optimizing various content types',
+    icon: '✏️',
+  },
+  {
+    id: 'marketing',
+    name: 'Marketing Automation',
+    description: 'Workflows for analyzing and improving marketing activities',
+    icon: '📊',
+  },
+  {
+    id: 'finance',
+    name: 'Financial Operations',
+    description: 'Workflows for financial analysis and reporting',
+    icon: '💰',
   },
   {
     id: 'communication',
-    name: 'Communication',
-    description: 'Templates for regulatory communications and emails',
+    name: 'Communication Flows',
+    description: 'Workflows for crafting effective business communications',
     icon: '📧',
+  },
+  {
+    id: 'workflows',
+    name: 'Workflows',
+    description: 'Multi-step task automation processes',
+    icon: '🔄',
   },
   {
     id: 'custom',
     name: 'Custom',
-    description: 'Your custom templates',
+    description: 'Your custom templates and workflows',
     icon: '✨',
   },
 ];

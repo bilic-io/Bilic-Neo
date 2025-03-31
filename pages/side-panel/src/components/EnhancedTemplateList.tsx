@@ -173,6 +173,26 @@ const EnhancedTemplateList: React.FC<TemplateListProps> = ({ onTemplateSelect, i
     input.click();
   };
 
+  const handleSelectTemplate = (template: Template) => {
+    if (template.isWorkflow && template.workflowSteps && template.workflowSteps.length > 0) {
+      // For workflow templates, create structured content with steps
+      const workflowContent = `${template.content}
+
+${template.workflowSteps
+  .map(
+    (step, index) =>
+      `Step ${index + 1}: ${step.title}
+${step.instruction}`,
+  )
+  .join('\n\n')}`;
+
+      onTemplateSelect(workflowContent);
+    } else {
+      // For regular templates, just use the content directly
+      onTemplateSelect(template.content);
+    }
+  };
+
   if (!isInitialized) {
     return (
       <div className="template-list-container p-3">
@@ -256,18 +276,43 @@ const EnhancedTemplateList: React.FC<TemplateListProps> = ({ onTemplateSelect, i
             return (
               <div
                 key={template.id}
-                className={`template-item relative ${template.isPinned ? 'border-l-2 border-green-500 pl-2' : ''}`}>
+                className={`template-item relative p-3 mb-2 rounded-lg cursor-pointer ${
+                  isDarkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-green-50'
+                } border ${
+                  template.isPinned
+                    ? isDarkMode
+                      ? 'border-green-600'
+                      : 'border-green-500'
+                    : isDarkMode
+                      ? 'border-gray-700'
+                      : 'border-gray-200'
+                } transition-colors duration-200`}>
                 <button
                   type="button"
-                  onClick={() => onTemplateSelect(template.content)}
+                  onClick={() => handleSelectTemplate(template)}
                   className="template-button w-full text-left">
                   <div
-                    className={`template-title text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>
+                    className={`template-title text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'} flex items-center`}>
                     {template.title}
+                    {template.isWorkflow && (
+                      <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                        Workflow
+                      </span>
+                    )}
                   </div>
                   {category && (
                     <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                       {category.icon} {category.name}
+                    </div>
+                  )}
+                  {template.isWorkflow && template.workflowSteps && (
+                    <div className={`text-xs mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      <div className="flex items-center">
+                        <span className="mr-2">{template.workflowSteps.length} steps</span>
+                        <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div className="bg-green-500 h-1 rounded-full" style={{ width: '0%' }}></div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </button>
