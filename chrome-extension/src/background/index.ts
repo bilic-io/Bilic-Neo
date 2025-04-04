@@ -8,8 +8,18 @@ import { createChatModel } from './agent/helper';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { Actors } from './agent/event/types';
 import { handleOAuthLogin, handleLogout } from './authHandler';
+import { initializeStorageOnInstall } from './initialize-storage';
 
 const logger = createLogger('background');
+
+// Initialize the extension with prefilled settings on install
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+  if (reason === 'install') {
+    initializeStorageOnInstall()
+      .then(() => logger.info('✅ Successfully initialized storage with default settings'))
+      .catch(error => logger.error('❌ Failed to initialize storage:', error));
+  }
+});
 
 const browserContext = new BrowserContext({});
 let currentExecutor: Executor | null = null;
