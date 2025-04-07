@@ -13,6 +13,9 @@ import { ActionBuilder } from './actions/builder';
 import { EventManager } from './event/manager';
 import { Actors, type EventCallback, EventType, ExecutionState } from './event/types';
 import { ChatModelAuthError } from './agents/errors';
+import nodemailer from 'nodemailer'; // For sending emails
+import type { Page } from 'puppeteer-core';
+
 const logger = createLogger('Executor');
 
 export interface ExecutorExtraArgs {
@@ -273,5 +276,174 @@ export class Executor {
 
   async getCurrentTaskId(): Promise<string> {
     return this.context.taskId;
+  }
+
+  async executeWithPuppeteer(
+    taskDetails: { url: string; checkLogin: boolean; taskDescription: string },
+    email: string,
+  ): Promise<void> {
+    const browserContext = this.context.browserContext;
+    let page: Page | null = null;
+    if (page != null) {
+      try {
+        page = (await browserContext.getCurrentPage()) as unknown as Page;
+        await page?.setViewport({ width: 1280, height: 800 });
+
+        // Configure page options
+        await page?.setRequestInterception(true);
+        page?.on('request', req => {
+          if (['image', 'stylesheet', 'font'].includes(req.resourceType())) {
+            req.abort();
+          } else {
+            req.continue();
+          }
+        });
+
+        // Navigate with timeout handling
+        const navigationPromise = page?.goto(taskDetails.url, {
+          waitUntil: 'networkidle2',
+          timeout: 60000,
+        });
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Navigation timeout')), 60000),
+        );
+
+        await Promise.race([navigationPromise, timeoutPromise]);
+        logger.info(`Navigated to ${taskDetails.url}`);
+
+        if (taskDetails.checkLogin) {
+          const isLoggedIn = await this.checkLoginStatus(page);
+          if (!isLoggedIn) {
+            await this.handleAuthRequired(email, taskDetails.taskDescription);
+            return;
+          }
+        }
+
+        const taskResult = await this.performTask(page, taskDetails.taskDescription);
+        await this.handleTaskCompletion(email, taskDetails.taskDescription, taskResult);
+      } catch (error) {
+        await this.handleTaskFailure(email, taskDetails.taskDescription, error);
+        throw error;
+      } finally {
+        await this.cleanupPage(page);
+      }
+    }
+  }
+
+  private async handleAuthRequired(email: string, taskDescription: string): Promise<void> {
+    logger.warning('User authentication required');
+    await this.sendEmail(email, 'Login Required', `Please log in to continue the task: ${taskDescription}`);
+    this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_PAUSE, 'User authentication needed');
+  }
+
+  private async handleTaskCompletion(email: string, description: string, result: string): Promise<void> {
+    logger.info('Task completed successfully');
+    await this.sendEmail(
+      email,
+      'Task Completed',
+      `The task "${description}" has been completed successfully. Result: ${result}`,
+    );
+    this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_OK, result);
+  }
+
+  private async handleTaskFailure(email: string, description: string, error: unknown): Promise<void> {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error(`Task failed: ${errorMessage}`);
+    await this.sendEmail(email, 'Task Failed', `The task "${description}" failed. Error: ${errorMessage}`);
+    this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_FAIL, errorMessage);
+  }
+
+  private async cleanupPage(page: Page | null): Promise<void> {
+    if (page && !page.isClosed()) {
+      try {
+        await page.removeAllListeners();
+        await page.close();
+        logger.debug('Page closed successfully');
+      } catch (error) {
+        logger.error(`Error closing page: ${error}`);
+      }
+    }
+  }
+
+  private async checkLoginStatus(page: Page): Promise<boolean> {
+    try {
+      // Check multiple indicators of logged-in state
+      const [loginVisible, accountVisible] = await Promise.all([
+        page.$('button#login:not([hidden])'),
+        page.$('#user-account:not([hidden])'),
+      ]);
+
+      // If login button is visible AND account element is hidden
+      return !loginVisible && !!accountVisible;
+    } catch (error) {
+      logger.error(`Login check failed: ${error}`);
+      return false;
+    }
+  }
+
+  private async performTask(page: Page, taskDescription: string): Promise<string> {
+    try {
+      const result = await Promise.race([
+        this.executePageTask(page, taskDescription),
+        new Promise((_, reject) => setTimeout(() => reject('Task timeout'), 120000)),
+      ]);
+
+      return JSON.stringify(result);
+    } catch (error) {
+      throw new Error(`Task execution failed: ${error instanceof Error ? error.message : error}`);
+    }
+  }
+
+  private async executePageTask(page: Page, description: string): Promise<unknown> {
+    const content = await page.evaluate(() => {
+      return {
+        title: document.title,
+        text: document.body.innerText,
+        links: Array.from(document.querySelectorAll('a')).map(a => ({
+          text: a.innerText,
+          href: a.href,
+        })),
+      };
+    });
+
+    return {
+      task: description,
+      result: content,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  private async sendEmail(to: string, subject: string, body: string): Promise<void> {
+    if (!process.env.EMAIL_SERVICE || !process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      throw new Error('Email configuration missing');
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: process.env.EMAIL_SERVICE,
+      pool: true,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: `"Nano Browser" <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      text: body,
+      priority: 'high',
+    };
+
+    try {
+      const info = await transporter.sendMail(mailOptions as nodemailer.SendMailOptions);
+      logger.debug(`Email sent: ${info.messageId}`);
+    } catch (error) {
+      logger.error(`Email send failed: ${error}`);
+      throw new Error(`Failed to send email: ${error instanceof Error ? error.message : error}`);
+    } finally {
+      transporter.close();
+    }
   }
 }
