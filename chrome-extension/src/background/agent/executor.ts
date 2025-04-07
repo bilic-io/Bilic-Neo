@@ -284,48 +284,81 @@ export class Executor {
   ): Promise<void> {
     const browserContext = this.context.browserContext;
     let page: Page | null = null;
-    if (page != null) {
-      try {
-        page = (await browserContext.getCurrentPage()) as unknown as Page;
-        await page?.setViewport({ width: 1280, height: 800 });
 
-        // Configure page options
-        await page?.setRequestInterception(true);
-        page?.on('request', req => {
-          if (['image', 'stylesheet', 'font'].includes(req.resourceType())) {
-            req.abort();
-          } else {
-            req.continue();
-          }
-        });
+    console.log('Starting Puppeteer execution');
+    logger.info('Starting Puppeteer execution');
+    console.log(`Task details: ${JSON.stringify(taskDetails)}`);
+    logger.debug(`Task details: ${JSON.stringify(taskDetails)}`);
 
-        // Navigate with timeout handling
-        const navigationPromise = page?.goto(taskDetails.url, {
-          waitUntil: 'networkidle2',
-          timeout: 60000,
-        });
+    try {
+      page = (await browserContext.getCurrentPage()) as unknown as Page;
+      if (!page) {
+        console.error('No page available from browser context');
+        logger.error('No page available from browser context');
+        return;
+      }
 
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Navigation timeout')), 60000),
-        );
+      console.log(`Page obtained, setting viewport for URL: ${taskDetails.url}`);
+      logger.info(`Page obtained, setting viewport for URL: ${taskDetails.url}`);
+      await page.setViewport({ width: 1280, height: 800 });
 
-        await Promise.race([navigationPromise, timeoutPromise]);
-        logger.info(`Navigated to ${taskDetails.url}`);
-
-        if (taskDetails.checkLogin) {
-          const isLoggedIn = await this.checkLoginStatus(page);
-          if (!isLoggedIn) {
-            await this.handleAuthRequired(email, taskDetails.taskDescription);
-            return;
-          }
+      // Configure page options
+      await page.setRequestInterception(true);
+      page.on('request', req => {
+        if (['image', 'stylesheet', 'font'].includes(req.resourceType())) {
+          req.abort();
+          console.log(`Request aborted for resource type: ${req.resourceType()}`);
+          logger.debug(`Request aborted for resource type: ${req.resourceType()}`);
+        } else {
+          req.continue();
+          console.log(`Request continued for resource type: ${req.resourceType()}`);
+          logger.debug(`Request continued for resource type: ${req.resourceType()}`);
         }
+      });
 
-        const taskResult = await this.performTask(page, taskDetails.taskDescription);
-        await this.handleTaskCompletion(email, taskDetails.taskDescription, taskResult);
-      } catch (error) {
-        await this.handleTaskFailure(email, taskDetails.taskDescription, error);
-        throw error;
-      } finally {
+      // Navigate with timeout handling
+      console.log(`Navigating to URL: ${taskDetails.url}`);
+      logger.info(`Navigating to URL: ${taskDetails.url}`);
+      const navigationPromise = page.goto(taskDetails.url, {
+        waitUntil: 'networkidle2',
+        timeout: 60000,
+      });
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Navigation timeout')), 60000),
+      );
+
+      await Promise.race([navigationPromise, timeoutPromise]);
+      console.log(`Navigation to ${taskDetails.url} completed`);
+      logger.info(`Navigation to ${taskDetails.url} completed`);
+
+      if (taskDetails.checkLogin) {
+        console.log('Checking login status');
+        logger.info('Checking login status');
+        const isLoggedIn = await this.checkLoginStatus(page);
+        if (!isLoggedIn) {
+          console.warn('User not logged in, handling authentication');
+          logger.warning('User not logged in, handling authentication');
+          await this.handleAuthRequired(email, taskDetails.taskDescription);
+          return;
+        }
+      }
+
+      console.log('Performing task on page');
+      logger.info('Performing task on page');
+      const taskResult = await this.performTask(page, taskDetails.taskDescription);
+      console.log(`Task completed with result: ${taskResult}`);
+      logger.info(`Task completed with result: ${taskResult}`);
+      await this.handleTaskCompletion(email, taskDetails.taskDescription, taskResult);
+    } catch (error) {
+      console.error(`Error during Puppeteer execution: ${error}`);
+      logger.error(`Error during Puppeteer execution: ${error}`);
+      await this.handleTaskFailure(email, taskDetails.taskDescription, error);
+      throw error;
+    } finally {
+      if (page) {
+        console.log('Cleaning up page');
+        logger.info('Cleaning up page');
         await this.cleanupPage(page);
       }
     }

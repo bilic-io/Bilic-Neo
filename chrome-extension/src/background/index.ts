@@ -157,6 +157,25 @@ chrome.runtime.onConnect.addListener(port => {
             await currentExecutor.pause();
             return port.postMessage({ type: 'success' });
           }
+
+          case 'execute_puppeteer_task': {
+            if (!message.taskDetails || !message.email) {
+              return port.postMessage({ type: 'error', error: 'Missing task details or email' });
+            }
+
+            logger.info('Executing Puppeteer task', message.taskDetails.url);
+            if (!currentExecutor) return port.postMessage({ type: 'error', error: 'No task to pause' });
+
+            currentExecutor
+              .executeWithPuppeteer(message.taskDetails, message.email)
+              .then(() => {
+                port.postMessage({ type: 'success', message: 'Task executed successfully' });
+              })
+              .catch(error => {
+                port.postMessage({ type: 'error', error: `Failed to execute task: ${error.message}` });
+              });
+          }
+
           default:
             return port.postMessage({ type: 'error', error: 'Unknown message type' });
         }
@@ -487,6 +506,57 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           error: 'Failed to setup URL analysis',
         });
 
+        // Clean up
+        if (executor) {
+          await executor.cleanup();
+        }
+      }
+    })();
+
+    // Return true to indicate that we'll send the response asynchronously
+    return true;
+  }
+
+  // Handle the execute message with Puppeteer action
+  if (message.type === 'execute_puppeteer_task' && message.payload) {
+    const { taskDetails, email } = message.payload;
+
+    if (!taskDetails.url) {
+      sendResponse({ success: false, error: 'Missing URL' });
+      return true;
+    }
+
+    // Create a unique task ID
+    const taskId = `puppeteer-task-${Date.now()}`;
+
+    (async () => {
+      let executor: Executor | null = null;
+
+      try {
+        // Set up an executor for this task
+        executor = await setupExecutor(taskId, JSON.stringify(taskDetails), browserContext);
+        logger.info('executing pupeteer tasks...', taskDetails);
+
+        // Navigate to the target URL first
+        await browserContext.navigateTo(taskDetails.url);
+        logger.info('navigation success...', taskDetails, email);
+
+        // Execute the task with Puppeteer
+        await executor.executeWithPuppeteer(taskDetails, email);
+        logger.info('executing pupeteer tasks...', taskDetails, email);
+
+        // Send a success response
+        sendResponse({
+          success: true,
+          message: 'Task executed successfully with Puppeteer',
+        });
+      } catch (error) {
+        console.error('Failed to execute Puppeteer task:', error);
+        sendResponse({
+          success: false,
+          error: 'Failed to execute Puppeteer task',
+        });
+      } finally {
         // Clean up
         if (executor) {
           await executor.cleanup();
