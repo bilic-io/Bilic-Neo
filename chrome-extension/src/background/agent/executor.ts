@@ -181,6 +181,19 @@ export class Executor {
           }
           validatorFailed = true;
         }
+
+        // Check if Puppeteer execution is needed
+        if (this.shouldExecuteWithPuppeteer()) {
+          console.log('executing with pupetter');
+          logger.info('....executing with pupeteer');
+          // const taskDetails = {
+          //   url: planOutput.result.url,
+          //   checkLogin: planOutput.result.requiresLogin,
+          //   taskDescription: planOutput.result.description // Assuming task description is part of the plan output
+          // };
+          // const email = context.getCurrentUserEmail();
+          // await this.executeWithPuppeteer(taskDetails, email);
+        }
       }
 
       if (done) {
@@ -278,205 +291,210 @@ export class Executor {
     return this.context.taskId;
   }
 
-  async executeWithPuppeteer(
-    taskDetails: { url: string; checkLogin: boolean; taskDescription: string },
-    email: string,
-  ): Promise<void> {
-    const browserContext = this.context.browserContext;
-    let page: Page | null = null;
-
-    console.log('Starting Puppeteer execution');
-    logger.info('Starting Puppeteer execution');
-    console.log(`Task details: ${JSON.stringify(taskDetails)}`);
-    logger.debug(`Task details: ${JSON.stringify(taskDetails)}`);
-
-    try {
-      page = (await browserContext.getCurrentPage()) as unknown as Page;
-      if (!page) {
-        console.error('No page available from browser context');
-        logger.error('No page available from browser context');
-        return;
-      }
-
-      console.log(`Page obtained, setting viewport for URL: ${taskDetails.url}`);
-      logger.info(`Page obtained, setting viewport for URL: ${taskDetails.url}`);
-      await page.setViewport({ width: 1280, height: 800 });
-
-      // Configure page options
-      await page.setRequestInterception(true);
-      page.on('request', req => {
-        if (['image', 'stylesheet', 'font'].includes(req.resourceType())) {
-          req.abort();
-          console.log(`Request aborted for resource type: ${req.resourceType()}`);
-          logger.debug(`Request aborted for resource type: ${req.resourceType()}`);
-        } else {
-          req.continue();
-          console.log(`Request continued for resource type: ${req.resourceType()}`);
-          logger.debug(`Request continued for resource type: ${req.resourceType()}`);
-        }
-      });
-
-      // Navigate with timeout handling
-      console.log(`Navigating to URL: ${taskDetails.url}`);
-      logger.info(`Navigating to URL: ${taskDetails.url}`);
-      const navigationPromise = page.goto(taskDetails.url, {
-        waitUntil: 'networkidle2',
-        timeout: 60000,
-      });
-
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Navigation timeout')), 60000),
-      );
-
-      await Promise.race([navigationPromise, timeoutPromise]);
-      console.log(`Navigation to ${taskDetails.url} completed`);
-      logger.info(`Navigation to ${taskDetails.url} completed`);
-
-      if (taskDetails.checkLogin) {
-        console.log('Checking login status');
-        logger.info('Checking login status');
-        const isLoggedIn = await this.checkLoginStatus(page);
-        if (!isLoggedIn) {
-          console.warn('User not logged in, handling authentication');
-          logger.warning('User not logged in, handling authentication');
-          await this.handleAuthRequired(email, taskDetails.taskDescription);
-          return;
-        }
-      }
-
-      console.log('Performing task on page');
-      logger.info('Performing task on page');
-      const taskResult = await this.performTask(page, taskDetails.taskDescription);
-      console.log(`Task completed with result: ${taskResult}`);
-      logger.info(`Task completed with result: ${taskResult}`);
-      await this.handleTaskCompletion(email, taskDetails.taskDescription, taskResult);
-    } catch (error) {
-      console.error(`Error during Puppeteer execution: ${error}`);
-      logger.error(`Error during Puppeteer execution: ${error}`);
-      await this.handleTaskFailure(email, taskDetails.taskDescription, error);
-      throw error;
-    } finally {
-      if (page) {
-        console.log('Cleaning up page');
-        logger.info('Cleaning up page');
-        await this.cleanupPage(page);
-      }
-    }
+  private shouldExecuteWithPuppeteer(): boolean {
+    // Implement your logic here to determine when to execute with Puppeteer
+    return true; // This is just a placeholder
   }
 
-  private async handleAuthRequired(email: string, taskDescription: string): Promise<void> {
-    logger.warning('User authentication required');
-    await this.sendEmail(email, 'Login Required', `Please log in to continue the task: ${taskDescription}`);
-    this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_PAUSE, 'User authentication needed');
-  }
+  // async executeWithPuppeteer(
+  //   taskDetails: { url: string; checkLogin: boolean; taskDescription: string },
+  //   email: string,
+  // ): Promise<void> {
+  //   const browserContext = this.context.browserContext;
+  //   let page: Page | null = null;
 
-  private async handleTaskCompletion(email: string, description: string, result: string): Promise<void> {
-    logger.info('Task completed successfully');
-    await this.sendEmail(
-      email,
-      'Task Completed',
-      `The task "${description}" has been completed successfully. Result: ${result}`,
-    );
-    this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_OK, result);
-  }
+  //   console.log('Starting Puppeteer execution');
+  //   logger.info('Starting Puppeteer execution');
+  //   console.log(`Task details: ${JSON.stringify(taskDetails)}`);
+  //   logger.debug(`Task details: ${JSON.stringify(taskDetails)}`);
 
-  private async handleTaskFailure(email: string, description: string, error: unknown): Promise<void> {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logger.error(`Task failed: ${errorMessage}`);
-    await this.sendEmail(email, 'Task Failed', `The task "${description}" failed. Error: ${errorMessage}`);
-    this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_FAIL, errorMessage);
-  }
+  //   try {
+  //     page = (await browserContext.getCurrentPage()) as unknown as Page;
+  //     if (!page) {
+  //       console.error('No page available from browser context');
+  //       logger.error('No page available from browser context');
+  //       return;
+  //     }
 
-  private async cleanupPage(page: Page | null): Promise<void> {
-    if (page && !page.isClosed()) {
-      try {
-        await page.removeAllListeners();
-        await page.close();
-        logger.debug('Page closed successfully');
-      } catch (error) {
-        logger.error(`Error closing page: ${error}`);
-      }
-    }
-  }
+  //     console.log(`Page obtained, setting viewport for URL: ${taskDetails.url}`);
+  //     logger.info(`Page obtained, setting viewport for URL: ${taskDetails.url}`);
+  //     await page.setViewport({ width: 1280, height: 800 });
 
-  private async checkLoginStatus(page: Page): Promise<boolean> {
-    try {
-      // Check multiple indicators of logged-in state
-      const [loginVisible, accountVisible] = await Promise.all([
-        page.$('button#login:not([hidden])'),
-        page.$('#user-account:not([hidden])'),
-      ]);
+  //     // Configure page options
+  //     await page.setRequestInterception(true);
+  //     page.on('request', req => {
+  //       if (['image', 'stylesheet', 'font'].includes(req.resourceType())) {
+  //         req.abort();
+  //         console.log(`Request aborted for resource type: ${req.resourceType()}`);
+  //         logger.debug(`Request aborted for resource type: ${req.resourceType()}`);
+  //       } else {
+  //         req.continue();
+  //         console.log(`Request continued for resource type: ${req.resourceType()}`);
+  //         logger.debug(`Request continued for resource type: ${req.resourceType()}`);
+  //       }
+  //     });
 
-      // If login button is visible AND account element is hidden
-      return !loginVisible && !!accountVisible;
-    } catch (error) {
-      logger.error(`Login check failed: ${error}`);
-      return false;
-    }
-  }
+  //     // Navigate with timeout handling
+  //     console.log(`Navigating to URL: ${taskDetails.url}`);
+  //     logger.info(`Navigating to URL: ${taskDetails.url}`);
+  //     const navigationPromise = page.goto(taskDetails.url, {
+  //       waitUntil: 'networkidle2',
+  //       timeout: 60000,
+  //     });
 
-  private async performTask(page: Page, taskDescription: string): Promise<string> {
-    try {
-      const result = await Promise.race([
-        this.executePageTask(page, taskDescription),
-        new Promise((_, reject) => setTimeout(() => reject('Task timeout'), 120000)),
-      ]);
+  //     const timeoutPromise = new Promise((_, reject) =>
+  //       setTimeout(() => reject(new Error('Navigation timeout')), 60000),
+  //     );
 
-      return JSON.stringify(result);
-    } catch (error) {
-      throw new Error(`Task execution failed: ${error instanceof Error ? error.message : error}`);
-    }
-  }
+  //     await Promise.race([navigationPromise, timeoutPromise]);
+  //     console.log(`Navigation to ${taskDetails.url} completed`);
+  //     logger.info(`Navigation to ${taskDetails.url} completed`);
 
-  private async executePageTask(page: Page, description: string): Promise<unknown> {
-    const content = await page.evaluate(() => {
-      return {
-        title: document.title,
-        text: document.body.innerText,
-        links: Array.from(document.querySelectorAll('a')).map(a => ({
-          text: a.innerText,
-          href: a.href,
-        })),
-      };
-    });
+  //     if (taskDetails.checkLogin) {
+  //       console.log('Checking login status');
+  //       logger.info('Checking login status');
+  //       const isLoggedIn = await this.checkLoginStatus(page);
+  //       if (!isLoggedIn) {
+  //         console.warn('User not logged in, handling authentication');
+  //         logger.warning('User not logged in, handling authentication');
+  //         await this.handleAuthRequired(email, taskDetails.taskDescription);
+  //         return;
+  //       }
+  //     }
 
-    return {
-      task: description,
-      result: content,
-      timestamp: new Date().toISOString(),
-    };
-  }
+  //     console.log('Performing task on page');
+  //     logger.info('Performing task on page');
+  //     const taskResult = await this.performTask(page, taskDetails.taskDescription);
+  //     console.log(`Task completed with result: ${taskResult}`);
+  //     logger.info(`Task completed with result: ${taskResult}`);
+  //     await this.handleTaskCompletion(email, taskDetails.taskDescription, taskResult);
+  //   } catch (error) {
+  //     console.error(`Error during Puppeteer execution: ${error}`);
+  //     logger.error(`Error during Puppeteer execution: ${error}`);
+  //     await this.handleTaskFailure(email, taskDetails.taskDescription, error);
+  //     throw error;
+  //   } finally {
+  //     if (page) {
+  //       console.log('Cleaning up page');
+  //       logger.info('Cleaning up page');
+  //       await this.cleanupPage(page);
+  //     }
+  //   }
+  // }
 
-  private async sendEmail(to: string, subject: string, body: string): Promise<void> {
-    if (!process.env.EMAIL_SERVICE || !process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-      throw new Error('Email configuration missing');
-    }
+  // private async handleAuthRequired(email: string, taskDescription: string): Promise<void> {
+  //   logger.warning('User authentication required');
+  //   await this.sendEmail(email, 'Login Required', `Please log in to continue the task: ${taskDescription}`);
+  //   this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_PAUSE, 'User authentication needed');
+  // }
 
-    const transporter = nodemailer.createTransport({
-      service: process.env.EMAIL_SERVICE,
-      pool: true,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
+  // private async handleTaskCompletion(email: string, description: string, result: string): Promise<void> {
+  //   logger.info('Task completed successfully');
+  //   await this.sendEmail(
+  //     email,
+  //     'Task Completed',
+  //     `The task "${description}" has been completed successfully. Result: ${result}`,
+  //   );
+  //   this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_OK, result);
+  // }
 
-    const mailOptions = {
-      from: `"Nano Browser" <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
-      text: body,
-      priority: 'high',
-    };
+  // private async handleTaskFailure(email: string, description: string, error: unknown): Promise<void> {
+  //   const errorMessage = error instanceof Error ? error.message : String(error);
+  //   logger.error(`Task failed: ${errorMessage}`);
+  //   await this.sendEmail(email, 'Task Failed', `The task "${description}" failed. Error: ${errorMessage}`);
+  //   this.context.emitEvent(Actors.SYSTEM, ExecutionState.TASK_FAIL, errorMessage);
+  // }
 
-    try {
-      const info = await transporter.sendMail(mailOptions as nodemailer.SendMailOptions);
-      logger.debug(`Email sent: ${info.messageId}`);
-    } catch (error) {
-      logger.error(`Email send failed: ${error}`);
-      throw new Error(`Failed to send email: ${error instanceof Error ? error.message : error}`);
-    } finally {
-      transporter.close();
-    }
-  }
+  // private async cleanupPage(page: Page | null): Promise<void> {
+  //   if (page && !page.isClosed()) {
+  //     try {
+  //       await page.removeAllListeners();
+  //       await page.close();
+  //       logger.debug('Page closed successfully');
+  //     } catch (error) {
+  //       logger.error(`Error closing page: ${error}`);
+  //     }
+  //   }
+  // }
+
+  // private async checkLoginStatus(page: Page): Promise<boolean> {
+  //   try {
+  //     // Check multiple indicators of logged-in state
+  //     const [loginVisible, accountVisible] = await Promise.all([
+  //       page.$('button#login:not([hidden])'),
+  //       page.$('#user-account:not([hidden])'),
+  //     ]);
+
+  //     // If login button is visible AND account element is hidden
+  //     return !loginVisible && !!accountVisible;
+  //   } catch (error) {
+  //     logger.error(`Login check failed: ${error}`);
+  //     return false;
+  //   }
+  // }
+
+  // private async performTask(page: Page, taskDescription: string): Promise<string> {
+  //   try {
+  //     const result = await Promise.race([
+  //       this.executePageTask(page, taskDescription),
+  //       new Promise((_, reject) => setTimeout(() => reject('Task timeout'), 120000)),
+  //     ]);
+
+  //     return JSON.stringify(result);
+  //   } catch (error) {
+  //     throw new Error(`Task execution failed: ${error instanceof Error ? error.message : error}`);
+  //   }
+  // }
+
+  // private async executePageTask(page: Page, description: string): Promise<unknown> {
+  //   const content = await page.evaluate(() => {
+  //     return {
+  //       title: document.title,
+  //       text: document.body.innerText,
+  //       links: Array.from(document.querySelectorAll('a')).map(a => ({
+  //         text: a.innerText,
+  //         href: a.href,
+  //       })),
+  //     };
+  //   });
+
+  //   return {
+  //     task: description,
+  //     result: content,
+  //     timestamp: new Date().toISOString(),
+  //   };
+  // }
+
+  // private async sendEmail(to: string, subject: string, body: string): Promise<void> {
+  //   if (!process.env.EMAIL_SERVICE || !process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+  //     throw new Error('Email configuration missing');
+  //   }
+
+  //   const transporter = nodemailer.createTransport({
+  //     service: process.env.EMAIL_SERVICE,
+  //     pool: true,
+  //     auth: {
+  //       user: process.env.EMAIL_USER,
+  //       pass: process.env.EMAIL_PASSWORD,
+  //     },
+  //   });
+
+  //   const mailOptions = {
+  //     from: `"Nano Browser" <${process.env.EMAIL_USER}>`,
+  //     to,
+  //     subject,
+  //     text: body,
+  //     priority: 'high',
+  //   };
+
+  //   try {
+  //     const info = await transporter.sendMail(mailOptions as nodemailer.SendMailOptions);
+  //     logger.debug(`Email sent: ${info.messageId}`);
+  //   } catch (error) {
+  //     logger.error(`Email send failed: ${error}`);
+  //     throw new Error(`Failed to send email: ${error instanceof Error ? error.message : error}`);
+  //   } finally {
+  //     transporter.close();
+  //   }
+  // }
 }

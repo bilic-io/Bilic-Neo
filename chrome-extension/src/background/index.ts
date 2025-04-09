@@ -166,14 +166,14 @@ chrome.runtime.onConnect.addListener(port => {
             logger.info('Executing Puppeteer task', message.taskDetails.url);
             if (!currentExecutor) return port.postMessage({ type: 'error', error: 'No task to pause' });
 
-            currentExecutor
-              .executeWithPuppeteer(message.taskDetails, message.email)
-              .then(() => {
-                port.postMessage({ type: 'success', message: 'Task executed successfully' });
-              })
-              .catch(error => {
-                port.postMessage({ type: 'error', error: `Failed to execute task: ${error.message}` });
-              });
+            // currentExecutor
+            //   .executeWithPuppeteer(message.taskDetails, message.email)
+            // .then(() => {
+            port.postMessage({ type: 'success', message: 'Task executed successfully' });
+            // })
+            // .catch(error => {
+            port.postMessage({ type: 'error', error: `Failed to execute task: ` });
+            // });
           }
 
           default:
@@ -542,7 +542,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         logger.info('navigation success...', taskDetails, email);
 
         // Execute the task with Puppeteer
-        await executor.executeWithPuppeteer(taskDetails, email);
+        // await executor.executeWithPuppeteer(taskDetails, email);
         logger.info('executing pupeteer tasks...', taskDetails, email);
 
         // Send a success response
