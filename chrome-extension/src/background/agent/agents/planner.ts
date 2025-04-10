@@ -8,7 +8,6 @@ import { isAuthenticationError } from '@src/background/utils';
 import { ChatModelAuthError } from './errors';
 const logger = createLogger('PlannerAgent');
 
-// Define Zod schema for planner output
 export const plannerOutputSchema = z.object({
   observation: z.string(),
   challenges: z.string(),
@@ -30,6 +29,30 @@ export const plannerOutputSchema = z.object({
       throw new Error('Invalid boolean string');
     }),
   ]),
+  background_task: z.union([
+    z.boolean(),
+    z.string().transform(val => {
+      if (val.toLowerCase() === 'true') return true;
+      if (val.toLowerCase() === 'false') return false;
+      throw new Error('Invalid boolean string');
+    }),
+  ]),
+  puppeteer_task_data: z
+    .object({
+      url: z.string().optional(),
+      actions: z
+        .array(
+          z.object({
+            type: z.enum(['click', 'input']),
+            selector: z.string(),
+            value: z.string().optional(),
+          }),
+        )
+        .optional(),
+      waitForSelector: z.string().optional(),
+      timeout: z.number().optional(),
+    })
+    .optional(),
 });
 
 export type PlannerOutput = z.infer<typeof plannerOutputSchema>;

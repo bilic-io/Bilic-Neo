@@ -147,3 +147,12 @@ export const selectDropdownOptionActionSchema: ActionSchema = {
     text: z.string(),
   }),
 };
+export const executeInBackgroundActionSchema: ActionSchema = {
+  name: 'execute_in_background',
+  description: 'Execute the task using internal engine in a background thread or isolated context.',
+  schema: z.object({
+    url: z.string(),
+    script: z.string().optional(),
+    timeout: z.number().optional(),
+  }),
+};

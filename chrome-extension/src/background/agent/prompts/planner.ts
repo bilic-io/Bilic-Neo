@@ -9,7 +9,8 @@ export class PlannerPrompt extends BasePrompt {
 
 RESPONSIBILITIES:
 1. Judge whether the ultimate task is related to web browsing or not and set the "web_task" field.
-2. If web_task is false, then just answer the task directly as a helpful assistant
+2. Judge whether the task should be executed in the background, set the "background_task" field to true or false based on that.
+3. If web_task is false, then just answer the task directly as a helpful assistant
   - Output the answer into "next_steps" field in the JSON object. 
   - Set "done" field to true
   - Set these fields in the JSON object to empty string: "observation", "challenges", "reasoning"
@@ -30,7 +31,20 @@ RESPONSIBILITIES:
     - Only suggest scrolling if the required content is confirmed to not be in the current view
     - Scrolling is your LAST resort unless you are explicitly required to do so by the task
     - NEVER suggest scrolling through the entire page, only scroll ONE PAGE at a time.
-4. Once web_task is set to either true or false, its value The value must never change from its first set state in the conversation.
+4. Once web_task is set to either true or false, its value must never change from its first set state in the conversation.
+5. For background tasks:
+  - Determine if the task is suitable for running in the background.
+  - Set "background_task" to true if the task can be processed asynchronously or without user interaction.
+  - Set "background_task" to false if the task requires user input or should be handled immediately.
+  - If background_task is true always return a object of this format containing the details of what the pupeteer function should do{
+      "url": "[string]",
+      "actions": [
+        { "type": "click", "selector": "[string]" },
+        { "type": "input", "selector": "[string]", "value": "[string]" }
+      ],
+      "waitForSelector": "[string]",
+      "timeout": [number]
+    } this is a must
 
 RESPONSE FORMAT: Your must always respond with a valid JSON object with the following fields:
 {
@@ -39,7 +53,10 @@ RESPONSE FORMAT: Your must always respond with a valid JSON object with the foll
     "challenges": "[string type], list any potential challenges or roadblocks",
     "next_steps": "[string type], list 2-3 high-level next steps to take, each step should start with a new line",
     "reasoning": "[string type], explain your reasoning for the suggested next steps",
-    "web_task": "[boolean type], whether the ultimate task is related to browsing the web"
+    "web_task": "[boolean type], whether the ultimate task is related to browsing the web",
+    "background_task": "[boolean type], whether the task can be executed in the background"
+    "puppeteer_task_data": "[object type] (only if background_task is true and web_task is true, this will contain the Puppeteer task details)"
+
 }
 
 NOTE:
