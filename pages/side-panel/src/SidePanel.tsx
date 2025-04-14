@@ -12,6 +12,7 @@ import EnhancedTemplateList from './components/EnhancedTemplateList';
 import RegulatoryMonitoring from './components/RegulatoryMonitoring';
 import Login from './components/Login';
 import authService from './services/authService';
+import BackgroundTasks from './components/BackgroundTasks';
 
 const KeyboardShortcuts = {
   NEW_CHAT: 'n',
@@ -907,6 +908,23 @@ const SidePanel = () => {
                 <span>Live Updates</span>
               </div>
             </button>
+            <button
+              className={`relative px-4 py-2 rounded-t-md font-medium text-sm focus:outline-none ${
+                activeTab === 'backgroundTasks'
+                  ? isDarkMode
+                    ? 'text-green-400 border-b-2 border-green-400'
+                    : 'text-green-600 border-b-2 border-green-600'
+                  : isDarkMode
+                    ? 'text-gray-400 hover:text-gray-300'
+                    : 'text-gray-600 hover:text-gray-800'
+              }`}
+              onClick={() => setActiveTab('backgroundTasks')}
+              role="tab"
+              aria-selected={activeTab === 'backgroundTasks'}
+              tabIndex={0}
+              aria-controls="backgroundTasks-panel">
+              Background Tasks
+            </button>
           </div>
         )}
 
@@ -959,7 +977,19 @@ const SidePanel = () => {
                   </div>
                 )}
 
+                {activeTab === 'backgroundTasks' && (
+                  <div className="flex-1 overflow-y-scroll">
+                    <BackgroundTasks />
+                  </div>
+                )}
                 {activeTab === 'compliance' && <RegulatoryMonitoring companyInfo={companyInfo} />}
+
+                {activeTab === 'backgroundTasks' && (
+                  // Placeholder for the new "Background Tasks" tab
+                  <div className="flex-1 overflow-auto">
+                    {/* Add your component for the "Background Tasks" tab here */}
+                  </div>
+                )}
               </div>
             </>
           )}

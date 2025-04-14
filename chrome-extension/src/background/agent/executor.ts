@@ -173,7 +173,7 @@ export class Executor {
 
             // Extract the task data and email
             const puppeteerTaskData = planOutput.result.puppeteer_task_data;
-            const email = 'user@example.com'; // Replace with actual email logic if necessary
+            const email = '';
 
             // Call executeWithPuppeteer with the relevant task data
             if (puppeteerTaskData && puppeteerTaskData.url) {
