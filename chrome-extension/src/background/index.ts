@@ -308,7 +308,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     // Create a headless browser context for compliance scanning
     const headlessBrowserContext = new BrowserContext({
-      headless: true, // Run in headless mode
+      headless: false, // Run in headless mode
       highlightElements: false, // No need to highlight in headless mode
     });
 
